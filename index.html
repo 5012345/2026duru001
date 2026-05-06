@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>방정식 코드 브레이커 - 챌린저 에디션</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js" type="module"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+KR:wght@300;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #050508;
+            color: #00ff9d;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .hacker-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), 
+                        url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=2070');
+            background-size: cover;
+            background-position: center;
+            z-index: -1;
+        }
+
+        .cyber-panel {
+            background: rgba(10, 10, 20, 0.95);
+            border: 2px solid #00ff9d;
+            box-shadow: 0 0 30px rgba(0, 255, 157, 0.3);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+
+        .btn-action {
+            transition: all 0.2s ease;
+            background: #00ff9d;
+            color: #050508;
+            font-weight: bold;
+        }
+
+        .btn-action:hover {
+            background: #05d684;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 157, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #00ff9d;
+            color: #00ff9d;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+        .btn-secondary:hover {
+            background: rgba(0, 255, 157, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 157, 0.3);
+        }
+
+        .btn-choice {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 157, 0.3);
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-choice:hover {
+            background: rgba(0, 255, 157, 0.2);
+            border-color: #00ff9d;
+        }
+
+        .keypad-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(0, 255, 157, 0.2);
+            color: #00ff9d;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.25rem;
+            padding: 12px 0;
+            transition: all 0.1s;
+        }
+
+        .keypad-btn:active {
+            background: #00ff9d;
+            color: #050508;
+            transform: scale(0.95);
+        }
+
+        .keypad-btn.op {
+            background: rgba(0, 255, 157, 0.15);
+            color: #fff;
+        }
+
+        #timer-bar { transition: width 0.1s linear; }
+
+        .hidden { display: none; }
+        
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="hacker-bg"></div>
+
+    <!-- Instruction Modal -->
+    <div id="instruction-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden">
+        <div class="cyber-panel p-8 max-w-lg w-full mx-4 text-center animate-fade-in border-yellow-500 shadow-[0_0_40px_rgba(234,179,8,0.2)]">
+            <h3 class="orbitron text-yellow-500 text-xl font-bold mb-4 uppercase tracking-widest">Hacking Protocol</h3>
+            <div id="modal-text" class="text-white mb-8 text-left space-y-3 text-sm leading-relaxed overflow-y-auto max-h-[60vh] pr-2 scrollbar-hide"></div>
+            <button id="modal-close-btn" class="btn-action w-full py-4 rounded-lg uppercase orbitron bg-yellow-500 hover:bg-yellow-400">데이터 수신 확인</button>
+        </div>
+    </div>
+
+    <!-- Rankings Modal -->
+    <div id="rank-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden">
+        <div class="cyber-panel p-8 max-w-md w-full mx-4 text-center animate-fade-in border-green-500">
+            <h3 class="orbitron text-green-400 text-xl font-bold mb-6 uppercase tracking-widest">Global Node Rankings</h3>
+            <div id="start-leaderboard" class="max-h-64 overflow-y-auto space-y-2 mb-8 pr-2 scrollbar-hide text-sm text-left">
+                <p class="text-gray-500 italic text-center">데이터를 불러오는 중...</p>
+            </div>
+            <button id="rank-modal-close-btn" class="btn-action w-full py-3 rounded-lg uppercase orbitron">닫기</button>
+        </div>
+    </div>
+
+    <div id="game-container" class="w-full max-w-2xl z-10">
+        
+        <!-- Start Screen -->
+        <div id="start-screen" class="cyber-panel p-10 text-center">
+            <div class="mb-6 flex justify-center">
+                <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+            </div>
+            <h1 class="text-5xl font-bold mb-4 orbitron text-white">CODE BREAKER</h1>
+            <p class="text-xl text-green-400 mb-8 font-medium">연립방정식 보안 시스템 해킹</p>
+            <p class="mb-10 text-gray-400 leading-relaxed text-sm">
+                세계 최고의 해커님. 당신의 해킹 능력을 시험해보십시오.<br>
+                단계별로 강화되는 보안 장치를 무력화하고 전설이 되십시오.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button id="start-btn" class="btn-action px-10 py-5 rounded-full text-xl uppercase orbitron flex-1">시스템 접속 시작</button>
+                <button id="view-rank-btn" class="btn-secondary px-10 py-5 rounded-full text-xl uppercase orbitron flex-1">글로벌 랭킹 열람</button>
+            </div>
+        </div>
+
+        <!-- Main Game Screen -->
+        <div id="game-screen" class="hidden cyber-panel p-6">
+            <div class="flex justify-between items-center mb-4">
+                <div class="text-left">
+                    <p class="text-[10px] uppercase text-gray-500 orbitron">Rank</p>
+                    <p id="rank-display" class="font-bold text-white text-sm">브론즈 해커</p>
+                </div>
+                <div class="text-center">
+                    <p id="score-display" class="text-3xl font-bold orbitron text-green-400">0000</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] uppercase text-gray-500 orbitron">Level</p>
+                    <p id="level-display" class="text-lg font-bold text-white orbitron">1</p>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <div class="w-full bg-gray-900 h-1.5 rounded-full overflow-hidden border border-green-900/30">
+                    <div id="timer-bar" class="bg-green-400 h-full w-full"></div>
+                </div>
+                <div class="flex justify-between text-[10px] text-gray-500 mt-1 orbitron">
+                    <span id="notice-box-small">SECURE CONNECTION</span>
+                    <span id="timer-text">120s</span>
+                </div>
+            </div>
+
+            <div id="problem-area" class="text-center mb-6 py-6 bg-black/50 rounded-xl border border-white/5 relative">
+                <div id="equation-display" class="space-y-2"></div>
+            </div>
+
+            <div id="choice-container" class="grid grid-cols-2 gap-3 hidden"></div>
+
+            <div id="input-container" class="hidden">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="relative">
+                        <label class="absolute -top-2.5 left-3 bg-[#0a0a14] px-1 text-[9px] text-green-400 orbitron">X_CODE</label>
+                        <input type="text" id="input-x" readonly class="w-full bg-transparent border border-gray-700 rounded-lg p-3 text-2xl text-center text-white focus:outline-none focus:border-green-400 cursor-pointer" placeholder="?">
+                    </div>
+                    <div class="relative">
+                        <label class="absolute -top-2.5 left-3 bg-[#0a0a14] px-1 text-[9px] text-green-400 orbitron">Y_CODE</label>
+                        <input type="text" id="input-y" readonly class="w-full bg-transparent border border-gray-700 rounded-lg p-3 text-2xl text-center text-white focus:outline-none focus:border-green-400 cursor-pointer" placeholder="?">
+                    </div>
+                </div>
+
+                <div id="hacker-keypad" class="grid grid-cols-4 gap-2 mb-4 animate-fade-in">
+                    <button class="keypad-btn" onclick="handleKey('7')">7</button>
+                    <button class="keypad-btn" onclick="handleKey('8')">8</button>
+                    <button class="keypad-btn" onclick="handleKey('9')">9</button>
+                    <button class="keypad-btn op" onclick="handleKey('del')">⌫</button>
+                    <button class="keypad-btn" onclick="handleKey('4')">4</button>
+                    <button class="keypad-btn" onclick="handleKey('5')">5</button>
+                    <button class="keypad-btn" onclick="handleKey('6')">6</button>
+                    <button class="keypad-btn op" onclick="handleKey('-')">-</button>
+                    <button class="keypad-btn" onclick="handleKey('1')">1</button>
+                    <button class="keypad-btn" onclick="handleKey('2')">2</button>
+                    <button class="keypad-btn" onclick="handleKey('3')">3</button>
+                    <button class="keypad-btn op" onclick="handleKey('.')">.</button>
+                    <button class="keypad-btn op" onclick="handleKey('/')">/</button>
+                    <button class="keypad-btn" onclick="handleKey('0')">0</button>
+                    <button class="keypad-btn op" onclick="handleKey('clear')">C</button>
+                    <button id="submit-btn" class="keypad-btn bg-green-500 !text-black !font-bold">OK</button>
+                </div>
+            </div>
+
+            <div id="msg-box" class="text-center h-4 text-xs font-bold opacity-0 transition-opacity"></div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden cyber-panel p-10 text-center">
+            <h2 class="text-3xl font-bold mb-2 orbitron text-red-500">SYSTEM DISCONNECTED</h2>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="p-4 bg-white/5 rounded-xl border border-white/10">
+                    <p class="text-xs text-gray-500 uppercase orbitron">Level</p>
+                    <p id="final-level" class="text-2xl font-bold text-white">0</p>
+                </div>
+                <div class="p-4 bg-white/5 rounded-xl border border-white/10">
+                    <p class="text-xs text-gray-500 uppercase orbitron">Score</p>
+                    <p id="final-score" class="text-2xl font-bold text-green-400">0</p>
+                </div>
+            </div>
+            <div id="record-form" class="mb-6">
+                <input type="text" id="user-name" maxlength="10" placeholder="ENTER HACKER NAME" class="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white text-center mb-2 focus:outline-none focus:border-green-400">
+                <button id="save-rank-btn" class="btn-action w-full py-3 rounded-lg uppercase text-sm orbitron">기록 저장</button>
+            </div>
+            <div class="text-left mb-6">
+                <h3 class="text-[10px] font-bold uppercase text-gray-500 mb-2 border-b border-gray-800 pb-1 orbitron">Global Node Rankings</h3>
+                <div id="leaderboard" class="max-h-32 overflow-y-auto space-y-1 pr-2 scrollbar-hide text-xs"></div>
+            </div>
+            <button id="restart-btn" class="btn-action w-full py-3 rounded-lg uppercase orbitron">재접속 시도</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebase Init ---
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'equation-breaker-v6';
+        let user = null;
+
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        };
+        initAuth();
+        onAuthStateChanged(auth, (u) => { user = u; if(u) fetchRankings(); });
+
+        // --- DOM Elements ---
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const timerBar = document.getElementById('timer-bar');
+        const timerText = document.getElementById('timer-text');
+        const noticeBoxSmall = document.getElementById('notice-box-small');
+        const msgBox = document.getElementById('msg-box');
+        const equationDisplay = document.getElementById('equation-display');
+        const choiceContainer = document.getElementById('choice-container');
+        const inputContainer = document.getElementById('input-container');
+        const instrModal = document.getElementById('instruction-modal');
+        const modalText = document.getElementById('modal-text');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const rankModal = document.getElementById('rank-modal');
+        const rankCloseBtn = document.getElementById('rank-modal-close-btn');
+
+        // --- Game State ---
+        let score = 0;
+        let level = 1;
+        let timeLeft = 120;
+        let currentMaxTime = 120;
+        let timerInterval;
+        let currentAnswers = { x: 0, y: 0 };
+        let currentProblemType = 'choice'; 
+        let isPaused = false;
+        let focusedInputId = 'input-x';
+        let lastProblemKey = ""; 
+
+        // Keypad focus handler
+        document.getElementById('input-x').addEventListener('click', () => { focusedInputId = 'input-x'; updateInputStyles(); });
+        document.getElementById('input-y').addEventListener('click', () => { focusedInputId = 'input-y'; updateInputStyles(); });
+
+        function updateInputStyles() {
+            const ix = document.getElementById('input-x');
+            const iy = document.getElementById('input-y');
+            if (ix && iy) {
+                ix.style.borderColor = focusedInputId === 'input-x' ? '#00ff9d' : '#374151';
+                iy.style.borderColor = focusedInputId === 'input-y' ? '#00ff9d' : '#374151';
+            }
+        }
+
+        window.handleKey = (key) => {
+            if (isPaused) return;
+            const input = document.getElementById(focusedInputId);
+            if (!input) return;
+            if (key === 'del') input.value = input.value.slice(0, -1);
+            else if (key === 'clear') input.value = '';
+            else {
+                if ((key === '.' || key === '/') && input.value.includes(key)) return;
+                input.value += key;
+            }
+        };
+
+        function evalValue(str) {
+            if (!str) return NaN;
+            if (str.includes('/')) {
+                const parts = str.split('/');
+                if (parts.length === 2 && parts[1] !== '0') return parseFloat(parts[0]) / parseFloat(parts[1]);
+                return NaN;
+            }
+            return parseFloat(str);
+        }
+
+        function showMessage(text, isError = false) {
+            if (!msgBox) return;
+            msgBox.innerText = text;
+            msgBox.style.color = isError ? '#ff4d4d' : '#00ff9d';
+            msgBox.classList.remove('opacity-0');
+            setTimeout(() => msgBox.classList.add('opacity-0'), 2000);
+        }
+
+        function showPopup(htmlContent, callback) {
+            if (!modalText || !instrModal) return;
+            isPaused = true;
+            modalText.innerHTML = htmlContent;
+            instrModal.classList.remove('hidden');
+            modalCloseBtn.onclick = () => {
+                instrModal.classList.add('hidden');
+                isPaused = false;
+                if (callback) callback();
+            };
+        }
+
+        function getNonZeroRand(min, max) {
+            let val;
+            do { val = Math.floor(Math.random() * (max - min + 1)) + min; } while (val === 0);
+            return val;
+        }
+
+        function generateProblem() {
+            if (level <= 12) currentMaxTime = 120;
+            else {
+                currentMaxTime = Math.max(10, 120 - (level - 12) * 5);
+                noticeBoxSmall.innerText = `TIMER REDUCTION ACTIVE: ${currentMaxTime}s`;
+                noticeBoxSmall.classList.add('text-yellow-500');
+            }
+            timeLeft = currentMaxTime;
+
+            const popups = {
+                4: '보안이 강화되었습니다. 제시되는 연립 일차방정식의 해를 직접 입력해야 합니다.',
+                7: '보안이 강화되었습니다. 제시되는 연립 일차방정식에 괄호가 포함됩니다.',
+                10: '보안이 최고 수준으로 올랐습니다. 이제부터는 분수 계수와 소수 계수가 포함됩니다.',
+                13: '이제부터는 시간 싸움입니다. 매 단계마다 제한 시간을 5초씩 줄입니다. 또한 복합 보안 장치가 출현합니다.'
+            };
+
+            if (popups[level]) showPopup(popups[level], actualGenerate);
+            else actualGenerate();
+        }
+
+        function actualGenerate() {
+            let x, y, probKey;
+            // Target X, Y are always INTEGERS
+            do {
+                const range = 5 + Math.floor(level / 4);
+                x = getNonZeroRand(-range, range);
+                y = getNonZeroRand(-range, range);
+                probKey = `${level}_${x}_${y}`;
+            } while (probKey === lastProblemKey);
+            
+            lastProblemKey = probKey;
+            currentAnswers = { x, y };
+
+            if (level <= 3) {
+                currentProblemType = 'choice';
+                generateLevel1_3(x, y);
+            } else if (level <= 6) {
+                currentProblemType = 'input';
+                generateLevelBasicSim(x, y);
+            } else if (level <= 9) {
+                currentProblemType = 'input';
+                generateLevelParentheses(x, y);
+            } else if (level <= 12) {
+                currentProblemType = 'input';
+                generateLevelComplex(x, y);
+            } else {
+                currentProblemType = 'input';
+                generateLevelExtreme(x, y);
+            }
+        }
+
+        function renderEquation(eq1, eq2 = null) {
+            if (!equationDisplay) return;
+            equationDisplay.innerHTML = `<p class="text-2xl font-bold text-white orbitron animate-fade-in">${eq1}</p>`;
+            if (eq2) equationDisplay.innerHTML += `<p class="text-2xl font-bold text-white orbitron animate-fade-in">${eq2}</p>`;
+        }
+
+        function fmt(coeff, varName, isFirst = false) {
+            if (coeff === 0) return "";
+            let sign = coeff > 0 ? (isFirst ? "" : " + ") : (isFirst ? "-" : " - ");
+            let val = Math.abs(coeff);
+            let displayVal = val === 1 ? "" : (Number.isInteger(val) ? val : val.toFixed(1));
+            return `${sign}${displayVal}${varName}`;
+        }
+
+        function generateLevel1_3(ansX, ansY) {
+            const a = getNonZeroRand(1, 5);
+            const b = getNonZeroRand(1, 5);
+            const c = (a * ansX + b * ansY);
+            renderEquation(`${a}x + ${b}y = ${c}`);
+            choiceContainer.innerHTML = '';
+            choiceContainer.classList.remove('hidden');
+            inputContainer.classList.add('hidden');
+            const choices = [{x: ansX, y: ansY}];
+            while (choices.length < 4) {
+                const rx = ansX + getNonZeroRand(-3, 3);
+                const ry = ansY + getNonZeroRand(-3, 3);
+                if (!choices.some(ch => ch.x === rx && ch.y === ry) && (a * rx + b * ry !== c)) choices.push({x: rx, y: ry});
+            }
+            choices.sort(() => Math.random() - 0.5).forEach(ch => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice py-3 rounded-lg orbitron text-sm font-bold';
+                btn.innerText = `(${ch.x}, ${ch.y})`;
+                btn.onclick = () => checkChoice(ch.x, ch.y);
+                choiceContainer.appendChild(btn);
+            });
+        }
+
+        function generateLevelBasicSim(ansX, ansY) {
+            let a, b, d, e;
+            do { a = getNonZeroRand(1, 4); b = getNonZeroRand(-4, 4); d = getNonZeroRand(1, 4); e = getNonZeroRand(-4, 4); } while (a * e === b * d);
+            renderEquation(`${fmt(a, 'x', true)}${fmt(b, 'y')} = ${a * ansX + b * ansY}`, `${fmt(d, 'x', true)}${fmt(e, 'y')} = ${d * ansX + e * ansY}`);
+            setupInputMode();
+        }
+
+        function generateLevelParentheses(ansX, ansY) {
+            let a = getNonZeroRand(2, 4), b = getNonZeroRand(-3, 3), k = getNonZeroRand(-3, 3);
+            const isX = Math.random() > 0.5;
+            let eq1 = isX ? `${a}(x ${k >= 0 ? '+' : '-'} ${Math.abs(k)}) ${b > 0 ? '+' : '-'} ${Math.abs(b)}y = ${a * (ansX + k) + b * ansY}` : `${a}x ${b > 0 ? '+' : '-'} ${Math.abs(b)}(y ${k >= 0 ? '+' : '-'} ${Math.abs(k)}) = ${a * ansX + b * (ansY + k)}`;
+            renderEquation(eq1, `x + y = ${ansX + ansY}`);
+            setupInputMode();
+        }
+
+        function generateLevelComplex(ansX, ansY) {
+            const isDecimal = Math.random() > 0.5;
+            if (isDecimal) {
+                let a = getNonZeroRand(1, 9) / 10, b = getNonZeroRand(1, 9) / 10;
+                renderEquation(`${a}x + ${b}y = ${(a * ansX + b * ansY).toFixed(2)}`, `x - y = ${ansX - ansY}`);
+            } else {
+                let den = getNonZeroRand(2, 5);
+                renderEquation(`x/${den} + y = ${(ansX / den + ansY).toFixed(2)}`, `x + y = ${ansX + ansY}`);
+            }
+            setupInputMode();
+        }
+
+        function generateLevelExtreme(ansX, ansY) {
+            let a = getNonZeroRand(1, 5) / 10, k = getNonZeroRand(-2, 2), den = getNonZeroRand(2, 4);
+            renderEquation(`${a}(x ${k >= 0 ? '+' : '-'} ${Math.abs(k)}) + 0.5y = ${(a * (ansX + k) + 0.5 * ansY).toFixed(2)}`, `x/${den} + y = ${(ansX / den + ansY).toFixed(2)}`);
+            setupInputMode();
+        }
+
+        function setupInputMode() {
+            if (!choiceContainer || !inputContainer) return;
+            choiceContainer.classList.add('hidden');
+            inputContainer.classList.remove('hidden');
+            document.getElementById('input-x').value = '';
+            document.getElementById('input-y').value = '';
+            focusedInputId = 'input-x';
+            updateInputStyles();
+        }
+
+        function checkChoice(xIn, yIn) {
+            if (isPaused) return;
+            const xVal = typeof xIn === 'string' ? evalValue(xIn) : xIn;
+            const yVal = typeof yIn === 'string' ? evalValue(yIn) : yIn;
+            if (isNaN(xVal) || isNaN(yVal)) return showMessage("해독 코드를 입력하세요", true);
+            if (Math.abs(xVal - currentAnswers.x) < 0.01 && Math.abs(yVal - currentAnswers.y) < 0.01) {
+                score += 100 + (timeLeft * 5);
+                level += 1;
+                showMessage("시스템 통과! 다음 노드 접속");
+                generateProblem();
+                updateUI();
+            } else {
+                timeLeft -= 10;
+                showMessage("해독 실패! 보안 시스템 역추적 중", true);
+                if (timeLeft <= 0) endGame();
+            }
+        }
+
+        function updateUI() {
+            const sd = document.getElementById('score-display'), ld = document.getElementById('level-display'), rd = document.getElementById('rank-display');
+            if (sd) sd.innerText = Math.floor(score).toString().padStart(4, '0');
+            if (ld) ld.innerText = level;
+            const ranks = [
+                {l: 19, n: "챌린저 해커"}, {l: 16, n: "마스터 해커"}, {l: 13, n: "다이아 해커"},
+                {l: 10, n: "플레티넘 해커"}, {l: 7, n: "골드 해커"}, {l: 4, n: "실버 해커"}, {l: 0, n: "브론즈 해커"}
+            ];
+            if (rd) rd.innerText = ranks.find(r => level >= r.l).n;
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (isPaused) return;
+                timeLeft -= 0.1;
+                const pct = (timeLeft / currentMaxTime) * 100;
+                if (timerBar) timerBar.style.width = `${pct}%`;
+                if (timerText) timerText.innerText = `${Math.ceil(timeLeft)}s`;
+                if (timeLeft <= 10) timerBar.classList.add('!bg-red-500');
+                else if (timerBar) timerBar.classList.remove('!bg-red-500');
+                if (timeLeft <= 0) endGame();
+            }, 100);
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+            if (gameScreen) gameScreen.classList.add('hidden');
+            if (resultScreen) resultScreen.classList.remove('hidden');
+            const fs = document.getElementById('final-score'), fl = document.getElementById('final-level');
+            if (fs) fs.innerText = Math.floor(score);
+            if (fl) fl.innerText = level;
+            fetchRankings();
+        }
+
+        async function fetchRankings() {
+            if (!user) return;
+            onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'rankings')), (snap) => {
+                const data = []; snap.forEach(d => data.push(d.data()));
+                data.sort((a, b) => b.score - a.score);
+                [document.getElementById('leaderboard'), document.getElementById('start-leaderboard')].forEach(el => {
+                    if (!el) return;
+                    el.innerHTML = '';
+                    data.slice(0, 10).forEach((entry, idx) => {
+                        const row = document.createElement('div');
+                        row.className = `flex justify-between items-center p-2 rounded ${idx === 0 ? 'bg-yellow-500/10 border border-yellow-500/20' : 'bg-white/5'}`;
+                        row.innerHTML = `<span class="orbitron text-gray-500 w-4">${idx+1}</span><span class="flex-1 font-bold ml-2 truncate">${entry.name}</span><span class="text-green-400 font-bold ml-2">Lv.${entry.level} | ${entry.score}</span>`;
+                        el.appendChild(row);
+                    });
+                });
+            });
+        }
+
+        document.getElementById('start-btn').onclick = () => {
+            const guide = `
+                <div class='space-y-3 text-gray-200 text-sm'>
+                    <p>1. 당신은 세계 최고의 해커가 되기 위해 시스템에 접속하였습니다. 연립방정식 보안 장치를 해독하십시오.</p>
+                    <p>2. <strong>해커 등급 시스템:</strong> 당신의 실력에 따라 등급이 상승합니다.<br>
+                       <span class='text-green-400 font-bold'>브론즈 → 실버(Lv.4) → 골드(Lv.7) → 플래티넘(Lv.10) → 다이아(Lv.13) → 마스터(Lv.16) → 챌린저(Lv.19)</span></p>
+                    <p>3. 레벨 1~3은 순서쌍 선택, 레벨 4부터는 직접 입력 방식입니다. <strong>정답은 항상 정수 범위</strong> 내에 있습니다.</p>
+                    <p>4. 레벨 12까지는 120초가 주어지며, 레벨 13부터는 제한 시간이 5초씩 줄어듭니다.</p>
+                    <p>5. 보안 수준이 올라감에 따라 괄호, 소수, 분수 계수가 포함된 복잡한 보안 장치가 나타납니다.</p>
+                </div>
+            `;
+            showPopup(guide, () => {
+                score = 0; level = 1;
+                startScreen.classList.add('hidden');
+                gameScreen.classList.remove('hidden');
+                generateProblem();
+                updateUI();
+                startTimer();
+            });
+        };
+
+        document.getElementById('view-rank-btn').onclick = () => rankModal.classList.remove('hidden');
+        rankCloseBtn.onclick = () => rankModal.classList.add('hidden');
+        document.getElementById('submit-btn').onclick = () => {
+            const ix = document.getElementById('input-x'), iy = document.getElementById('input-y');
+            if (ix && iy) checkChoice(ix.value, iy.value);
+        };
+        document.getElementById('save-rank-btn').onclick = async () => {
+            const ni = document.getElementById('user-name'), name = ni ? ni.value.trim() : "ANON";
+            if (!user) return;
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rankings', user.uid), { name, score: Math.floor(score), level, uid: user.uid, timestamp: Date.now() });
+                document.getElementById('record-form').innerHTML = '<p class="text-green-400 font-bold text-sm italic">기록이 전송되었습니다.</p>';
+            } catch (e) { console.error(e); }
+        };
+        document.getElementById('restart-btn').onclick = () => location.reload();
+    </script>
+</body>
+</html>
