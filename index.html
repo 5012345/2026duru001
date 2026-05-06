@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>방정식 코드 브레이커 - 챌린저 에디션</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDK (필요 시 로드) -->
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js" type="module"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js" type="module"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js" type="module"></script>
@@ -103,7 +104,7 @@
 
         #timer-bar { transition: width 0.1s linear; }
 
-        .hidden { display: none; }
+        .hidden { display: none !important; }
         
         .scrollbar-hide::-webkit-scrollbar { display: none; }
 
@@ -132,14 +133,13 @@
         <div class="cyber-panel p-8 max-w-md w-full mx-4 text-center animate-fade-in border-green-500">
             <h3 class="orbitron text-green-400 text-xl font-bold mb-6 uppercase tracking-widest">Global Node Rankings</h3>
             <div id="start-leaderboard" class="max-h-64 overflow-y-auto space-y-2 mb-8 pr-2 scrollbar-hide text-sm text-left">
-                <p class="text-gray-500 italic text-center">데이터를 불러오는 중...</p>
+                <p class="text-gray-500 italic text-center">랭킹 시스템 오프라인 (서버 연결 없음)</p>
             </div>
             <button id="rank-modal-close-btn" class="btn-action w-full py-3 rounded-lg uppercase orbitron">닫기</button>
         </div>
     </div>
 
     <div id="game-container" class="w-full max-w-2xl z-10">
-        
         <!-- Start Screen -->
         <div id="start-screen" class="cyber-panel p-10 text-center">
             <div class="mb-6 flex justify-center">
@@ -242,8 +242,10 @@
                 <button id="save-rank-btn" class="btn-action w-full py-3 rounded-lg uppercase text-sm orbitron">기록 저장</button>
             </div>
             <div class="text-left mb-6">
-                <h3 class="text-[10px] font-bold uppercase text-gray-500 mb-2 border-b border-gray-800 pb-1 orbitron">Global Node Rankings</h3>
-                <div id="leaderboard" class="max-h-32 overflow-y-auto space-y-1 pr-2 scrollbar-hide text-xs"></div>
+                <h3 class="text-[10px] font-bold uppercase text-gray-500 mb-2 border-b border-gray-800 pb-1 orbitron">Node Rankings</h3>
+                <div id="leaderboard" class="max-h-32 overflow-y-auto space-y-1 pr-2 scrollbar-hide text-xs">
+                    <p class="text-gray-500 italic">오프라인 모드: 랭킹을 불러올 수 없습니다.</p>
+                </div>
             </div>
             <button id="restart-btn" class="btn-action w-full py-3 rounded-lg uppercase orbitron">재접속 시도</button>
         </div>
@@ -254,23 +256,36 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- Firebase Init ---
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'equation-breaker-v6';
+        // --- Firebase Init (Safety Check for External Environments) ---
+        let db = null;
+        let auth = null;
         let user = null;
+        let appId = 'equation-breaker-v6';
 
-        const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
+        const initFirebase = async () => {
+            try {
+                // Gemini 환경 변수가 있는지 확인
+                if (typeof __firebase_config !== 'undefined') {
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    const app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+                    appId = typeof __app_id !== 'undefined' ? __app_id : 'equation-breaker-v6';
+
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    onAuthStateChanged(auth, (u) => { user = u; if(u) fetchRankings(); });
+                } else {
+                    console.log("Firebase config not found. Running in Offline Mode.");
+                }
+            } catch (e) {
+                console.warn("Firebase initialization failed:", e);
             }
         };
-        initAuth();
-        onAuthStateChanged(auth, (u) => { user = u; if(u) fetchRankings(); });
+        initFirebase();
 
         // --- DOM Elements ---
         const startScreen = document.getElementById('start-screen');
@@ -384,7 +399,6 @@
 
         function actualGenerate() {
             let x, y, probKey;
-            // Target X, Y are always INTEGERS
             do {
                 const range = 5 + Math.floor(level / 4);
                 x = getNonZeroRand(-range, range);
@@ -547,21 +561,23 @@
         }
 
         async function fetchRankings() {
-            if (!user) return;
-            onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'rankings')), (snap) => {
-                const data = []; snap.forEach(d => data.push(d.data()));
-                data.sort((a, b) => b.score - a.score);
-                [document.getElementById('leaderboard'), document.getElementById('start-leaderboard')].forEach(el => {
-                    if (!el) return;
-                    el.innerHTML = '';
-                    data.slice(0, 10).forEach((entry, idx) => {
-                        const row = document.createElement('div');
-                        row.className = `flex justify-between items-center p-2 rounded ${idx === 0 ? 'bg-yellow-500/10 border border-yellow-500/20' : 'bg-white/5'}`;
-                        row.innerHTML = `<span class="orbitron text-gray-500 w-4">${idx+1}</span><span class="flex-1 font-bold ml-2 truncate">${entry.name}</span><span class="text-green-400 font-bold ml-2">Lv.${entry.level} | ${entry.score}</span>`;
-                        el.appendChild(row);
+            if (!db || !user) return;
+            try {
+                onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'rankings')), (snap) => {
+                    const data = []; snap.forEach(d => data.push(d.data()));
+                    data.sort((a, b) => b.score - a.score);
+                    [document.getElementById('leaderboard'), document.getElementById('start-leaderboard')].forEach(el => {
+                        if (!el) return;
+                        el.innerHTML = '';
+                        data.slice(0, 10).forEach((entry, idx) => {
+                            const row = document.createElement('div');
+                            row.className = `flex justify-between items-center p-2 rounded ${idx === 0 ? 'bg-yellow-500/10 border border-yellow-500/20' : 'bg-white/5'}`;
+                            row.innerHTML = `<span class="orbitron text-gray-500 w-4">${idx+1}</span><span class="flex-1 font-bold ml-2 truncate">${entry.name}</span><span class="text-green-400 font-bold ml-2">Lv.${entry.level} | ${entry.score}</span>`;
+                            el.appendChild(row);
+                        });
                     });
                 });
-            });
+            } catch(e) {}
         }
 
         document.getElementById('start-btn').onclick = () => {
@@ -585,15 +601,21 @@
             });
         };
 
-        document.getElementById('view-rank-btn').onclick = () => rankModal.classList.remove('hidden');
+        document.getElementById('view-rank-btn').onclick = () => {
+            rankModal.classList.remove('hidden');
+            fetchRankings();
+        };
         rankCloseBtn.onclick = () => rankModal.classList.add('hidden');
         document.getElementById('submit-btn').onclick = () => {
             const ix = document.getElementById('input-x'), iy = document.getElementById('input-y');
             if (ix && iy) checkChoice(ix.value, iy.value);
         };
         document.getElementById('save-rank-btn').onclick = async () => {
+            if (!db || !user) {
+                showMessage("오프라인 상태에서는 저장할 수 없습니다.", true);
+                return;
+            }
             const ni = document.getElementById('user-name'), name = ni ? ni.value.trim() : "ANON";
-            if (!user) return;
             try {
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rankings', user.uid), { name, score: Math.floor(score), level, uid: user.uid, timestamp: Date.now() });
                 document.getElementById('record-form').innerHTML = '<p class="text-green-400 font-bold text-sm italic">기록이 전송되었습니다.</p>';
