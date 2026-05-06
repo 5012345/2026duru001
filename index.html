@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>방정식 코드 브레이커 - 챌린저 에디션</title>
+    <title>방정식 코드 브레이커 - 글로벌 랭킹</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+KR:wght@300;500;700&display=swap');
@@ -52,16 +52,20 @@
             box-shadow: 0 5px 20px rgba(0, 255, 157, 0.4);
         }
 
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #00ff9d;
+            color: #00ff9d;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover { background: rgba(0, 255, 157, 0.1); }
+
         .btn-choice {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(0, 255, 157, 0.3);
             color: white;
             transition: all 0.2s;
-        }
-
-        .btn-choice:hover {
-            background: rgba(0, 255, 157, 0.2);
-            border-color: #00ff9d;
         }
 
         .keypad-btn {
@@ -75,39 +79,19 @@
             transition: all 0.1s;
         }
 
-        .keypad-btn:active {
-            background: #00ff9d;
-            color: #050508;
-            transform: scale(0.95);
-        }
-
-        .keypad-btn.op {
-            background: rgba(0, 255, 157, 0.15);
-            color: #fff;
-        }
+        .keypad-btn:active { background: #00ff9d; color: #050508; transform: scale(0.95); }
+        .keypad-btn.op { background: rgba(0, 255, 157, 0.15); color: #fff; }
 
         #timer-bar { transition: width 0.1s linear; }
-
         .hidden { display: none !important; }
-        
         .scrollbar-hide::-webkit-scrollbar { display: none; }
-
-        /* Animation Keyframes */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
 
         @keyframes fillVertical {
             from { height: 0%; }
             to { height: var(--final-height); }
         }
-        .animate-fill-up {
-            animation: fillVertical 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
+        .animate-fill-up { animation: fillVertical 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-        /* Gauge Styling */
         .rank-label {
             position: absolute;
             right: 110%;
@@ -115,13 +99,9 @@
             white-space: nowrap;
             font-size: 0.7rem;
             color: #4b5563;
-            transition: color 0.5s, font-weight 0.5s;
+            transition: color 0.5s;
         }
-        .rank-label.active {
-            color: #00ff9d;
-            font-weight: bold;
-            font-size: 0.8rem;
-        }
+        .rank-label.active { color: #00ff9d; font-weight: bold; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -130,10 +110,21 @@
 
     <!-- Instruction Modal -->
     <div id="instruction-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden">
-        <div class="cyber-panel p-8 max-w-lg w-full mx-4 text-center animate-fade-in border-yellow-500 shadow-[0_0_40px_rgba(234,179,8,0.2)]">
+        <div class="cyber-panel p-8 max-w-lg w-full mx-4 text-center border-yellow-500 shadow-[0_0_40px_rgba(234,179,8,0.2)]">
             <h3 class="orbitron text-yellow-500 text-xl font-bold mb-4 uppercase tracking-widest">Hacking Protocol</h3>
             <div id="modal-text" class="text-white mb-8 text-left space-y-3 text-sm leading-relaxed overflow-y-auto max-h-[60vh] pr-2 scrollbar-hide"></div>
             <button id="modal-close-btn" class="btn-action w-full py-4 rounded-lg uppercase orbitron bg-yellow-500 hover:bg-yellow-400">데이터 수신 확인</button>
+        </div>
+    </div>
+
+    <!-- Ranking Modal -->
+    <div id="rank-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden">
+        <div class="cyber-panel p-8 max-w-md w-full mx-4 text-center border-green-500 shadow-[0_0_40px_rgba(0,255,157,0.1)]">
+            <h3 class="orbitron text-green-400 text-xl font-bold mb-6 uppercase tracking-widest text-center">Global Rankings</h3>
+            <div id="ranking-list" class="space-y-2 mb-8 text-left max-h-80 overflow-y-auto pr-2 scrollbar-hide">
+                <p class="text-center text-gray-500 italic">랭킹 정보를 동기화 중...</p>
+            </div>
+            <button id="rank-modal-close" class="btn-secondary w-full py-3 rounded-lg uppercase orbitron">시스템 접속 종료</button>
         </div>
     </div>
 
@@ -141,81 +132,43 @@
         <!-- Start Screen -->
         <div id="start-screen" class="cyber-panel p-10 text-center">
             <div class="mb-6 flex justify-center">
-                <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
             </div>
             <h1 class="text-5xl font-bold mb-4 orbitron text-white">CODE BREAKER</h1>
             <p class="text-xl text-green-400 mb-8 font-medium">연립방정식 보안 시스템 해킹</p>
-            <p class="mb-10 text-gray-400 leading-relaxed text-sm">
-                세계 최고의 해커님. 당신의 해킹 능력을 시험해보십시오.<br>
-                단계별로 강화되는 보안 장치를 무력화하고 전설이 되십시오.
-            </p>
-            <button id="start-btn" class="btn-action px-16 py-5 rounded-full text-2xl uppercase orbitron w-full max-w-md mx-auto">시스템 접속 시작</button>
+            <div class="flex flex-col gap-4 max-w-sm mx-auto">
+                <button id="start-btn" class="btn-action px-10 py-5 rounded-full text-xl uppercase orbitron">시스템 접속 시작</button>
+                <button id="view-rank-btn" class="btn-secondary px-10 py-3 rounded-full text-lg uppercase orbitron">글로벌 랭킹 확인</button>
+            </div>
         </div>
 
         <!-- Main Game Screen -->
         <div id="game-screen" class="hidden cyber-panel p-6">
             <div class="flex justify-between items-center mb-4">
-                <div class="text-left">
-                    <p class="text-[10px] uppercase text-gray-500 orbitron">Rank</p>
-                    <p id="rank-display" class="font-bold text-white text-sm">브론즈 해커</p>
-                </div>
-                <div class="text-center">
-                    <p id="score-display" class="text-3xl font-bold orbitron text-green-400">0000</p>
-                </div>
-                <div class="text-right">
-                    <p class="text-[10px] uppercase text-gray-500 orbitron">Level</p>
-                    <p id="level-display" class="text-lg font-bold text-white orbitron">1</p>
-                </div>
+                <div class="text-left"><p class="text-[10px] uppercase text-gray-500 orbitron">Rank</p><p id="rank-display" class="font-bold text-white text-sm">브론즈 해커</p></div>
+                <div class="text-center"><p id="score-display" class="text-3xl font-bold orbitron text-green-400">0000</p></div>
+                <div class="text-right"><p class="text-[10px] uppercase text-gray-500 orbitron">Level</p><p id="level-display" class="text-lg font-bold text-white orbitron">1</p></div>
             </div>
-
             <div class="mb-6">
                 <div class="w-full bg-gray-900 h-1.5 rounded-full overflow-hidden border border-green-900/30">
                     <div id="timer-bar" class="bg-green-400 h-full w-full"></div>
                 </div>
-                <div class="flex justify-between text-[10px] text-gray-500 mt-1 orbitron">
-                    <span id="notice-box-small">SECURE CONNECTION</span>
-                    <span id="timer-text">120s</span>
-                </div>
+                <div class="flex justify-between text-[10px] text-gray-500 mt-1 orbitron"><span>SECURE CONNECTION</span><span id="timer-text">120s</span></div>
             </div>
-
-            <div id="problem-area" class="text-center mb-6 py-6 bg-black/50 rounded-xl border border-white/5 relative">
-                <div id="equation-display" class="space-y-2"></div>
-            </div>
-
+            <div id="problem-area" class="text-center mb-6 py-6 bg-black/50 rounded-xl border border-white/5 relative"><div id="equation-display" class="space-y-2"></div></div>
             <div id="choice-container" class="grid grid-cols-2 gap-3 hidden"></div>
-
             <div id="input-container" class="hidden">
                 <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div class="relative">
-                        <label class="absolute -top-2.5 left-3 bg-[#0a0a14] px-1 text-[9px] text-green-400 orbitron">X_CODE</label>
-                        <input type="text" id="input-x" readonly class="w-full bg-transparent border border-gray-700 rounded-lg p-3 text-2xl text-center text-white focus:outline-none focus:border-green-400 cursor-pointer" placeholder="?">
-                    </div>
-                    <div class="relative">
-                        <label class="absolute -top-2.5 left-3 bg-[#0a0a14] px-1 text-[9px] text-green-400 orbitron">Y_CODE</label>
-                        <input type="text" id="input-y" readonly class="w-full bg-transparent border border-gray-700 rounded-lg p-3 text-2xl text-center text-white focus:outline-none focus:border-green-400 cursor-pointer" placeholder="?">
-                    </div>
+                    <div class="relative"><label class="absolute -top-2.5 left-3 bg-[#0a0a14] px-1 text-[9px] text-green-400 orbitron">X_CODE</label><input type="text" id="input-x" readonly class="w-full bg-transparent border border-gray-700 rounded-lg p-3 text-2xl text-center text-white focus:outline-none focus:border-green-400 cursor-pointer" placeholder="?"></div>
+                    <div class="relative"><label class="absolute -top-2.5 left-3 bg-[#0a0a14] px-1 text-[9px] text-green-400 orbitron">Y_CODE</label><input type="text" id="input-y" readonly class="w-full bg-transparent border border-gray-700 rounded-lg p-3 text-2xl text-center text-white focus:outline-none focus:border-green-400 cursor-pointer" placeholder="?"></div>
                 </div>
-
-                <div id="hacker-keypad" class="grid grid-cols-4 gap-2 mb-4 animate-fade-in">
-                    <button class="keypad-btn" onclick="handleKey('7')">7</button>
-                    <button class="keypad-btn" onclick="handleKey('8')">8</button>
-                    <button class="keypad-btn" onclick="handleKey('9')">9</button>
-                    <button class="keypad-btn op" onclick="handleKey('del')">⌫</button>
-                    <button class="keypad-btn" onclick="handleKey('4')">4</button>
-                    <button class="keypad-btn" onclick="handleKey('5')">5</button>
-                    <button class="keypad-btn" onclick="handleKey('6')">6</button>
-                    <button class="keypad-btn op" onclick="handleKey('-')">-</button>
-                    <button class="keypad-btn" onclick="handleKey('1')">1</button>
-                    <button class="keypad-btn" onclick="handleKey('2')">2</button>
-                    <button class="keypad-btn" onclick="handleKey('3')">3</button>
-                    <button class="keypad-btn op" onclick="handleKey('.')">.</button>
-                    <button class="keypad-btn op" onclick="handleKey('/')">/</button>
-                    <button class="keypad-btn" onclick="handleKey('0')">0</button>
-                    <button class="keypad-btn op" onclick="handleKey('clear')">C</button>
-                    <button id="submit-btn" class="keypad-btn bg-green-500 !text-black !font-bold">OK</button>
+                <div id="hacker-keypad" class="grid grid-cols-4 gap-2 mb-4">
+                    <button class="keypad-btn" onclick="handleKey('7')">7</button><button class="keypad-btn" onclick="handleKey('8')">8</button><button class="keypad-btn" onclick="handleKey('9')">9</button><button class="keypad-btn op" onclick="handleKey('del')">⌫</button>
+                    <button class="keypad-btn" onclick="handleKey('4')">4</button><button class="keypad-btn" onclick="handleKey('5')">5</button><button class="keypad-btn" onclick="handleKey('6')">6</button><button class="keypad-btn op" onclick="handleKey('-')">-</button>
+                    <button class="keypad-btn" onclick="handleKey('1')">1</button><button class="keypad-btn" onclick="handleKey('2')">2</button><button class="keypad-btn" onclick="handleKey('3')">3</button><button class="keypad-btn op" onclick="handleKey('.')">.</button>
+                    <button class="keypad-btn op" onclick="handleKey('/')">/</button><button class="keypad-btn" onclick="handleKey('0')">0</button><button class="keypad-btn op" onclick="handleKey('clear')">C</button><button id="submit-btn" class="keypad-btn bg-green-500 !text-black !font-bold">OK</button>
                 </div>
             </div>
-
             <div id="msg-box" class="text-center h-4 text-xs font-bold opacity-0 transition-opacity"></div>
         </div>
 
@@ -223,353 +176,335 @@
         <div id="result-screen" class="hidden cyber-panel p-8 text-center overflow-hidden">
             <h2 class="text-2xl font-bold mb-1 orbitron text-red-500">SYSTEM DISCONNECTED</h2>
             <p id="final-rank-text" class="text-xl font-bold text-white mb-6">당신의 계급은 브론즈 해커입니다.</p>
-            
             <div class="flex items-center justify-around mb-8 h-64">
-                <!-- Score Stats Left -->
                 <div class="text-left space-y-4">
-                    <div class="p-4 bg-white/5 rounded-xl border border-white/10 w-32">
-                        <p class="text-[10px] text-gray-500 uppercase orbitron">Final Level</p>
-                        <p id="final-level" class="text-2xl font-bold text-white">0</p>
-                    </div>
-                    <div class="p-4 bg-white/5 rounded-xl border border-white/10 w-32">
-                        <p class="text-[10px] text-gray-500 uppercase orbitron">Final Score</p>
-                        <p id="final-score" class="text-2xl font-bold text-green-400">0</p>
-                    </div>
+                    <div class="p-4 bg-white/5 rounded-xl border border-white/10 w-32"><p class="text-[10px] text-gray-500 uppercase orbitron">Final Level</p><p id="final-level" class="text-2xl font-bold text-white">0</p></div>
+                    <div class="p-4 bg-white/5 rounded-xl border border-white/10 w-32"><p class="text-[10px] text-gray-500 uppercase orbitron">Final Score</p><p id="final-score" class="text-2xl font-bold text-green-400">0</p></div>
                 </div>
-
-                <!-- Vertical Gauge Right -->
-                <div class="relative w-4 bg-gray-900 h-full rounded-full border border-white/10 shadow-[0_0_10px_rgba(0,0,0,1)]">
-                    <div id="gauge-bar" class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-green-900 to-green-400 rounded-full shadow-[0_0_15px_#00ff9d] animate-fill-up" style="--final-height: 0%;"></div>
-                    
-                    <!-- Labels -->
-                    <div class="rank-label" style="bottom: 95%;">Challenger</div>
-                    <div class="rank-label" style="bottom: 80%;">Master</div>
-                    <div class="rank-label" style="bottom: 65%;">Diamond</div>
-                    <div class="rank-label" style="bottom: 50%;">Platinum</div>
-                    <div class="rank-label" style="bottom: 35%;">Gold</div>
-                    <div class="rank-label" style="bottom: 20%;">Silver</div>
-                    <div class="rank-label" style="bottom: 5%;">Bronze</div>
+                <div class="relative w-4 bg-gray-900 h-full rounded-full border border-white/10">
+                    <div id="gauge-bar" class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-green-900 to-green-400 rounded-full shadow-[0_0_15px_#00ff9d]" style="height: 0%;"></div>
+                    <div class="rank-label" style="bottom: 95%;">Challenger</div><div class="rank-label" style="bottom: 80%;">Master</div><div class="rank-label" style="bottom: 65%;">Diamond</div><div class="rank-label" style="bottom: 50%;">Platinum</div><div class="rank-label" style="bottom: 35%;">Gold</div><div class="rank-label" style="bottom: 20%;">Silver</div><div class="rank-label" style="bottom: 5%;">Bronze</div>
                 </div>
             </div>
-
-            <button id="restart-btn" class="btn-action w-full py-4 rounded-xl uppercase orbitron text-xl">메인 프레임 재접속</button>
+            <div id="save-ranking-section" class="mb-8">
+                <p class="text-xs text-gray-400 mb-2">당신의 명예를 기록하세요 (최대 10자)</p>
+                <div class="flex gap-2 max-w-xs mx-auto">
+                    <input type="text" id="hacker-name" maxlength="10" class="flex-1 bg-black/50 border border-gray-700 rounded p-2 text-white text-center focus:outline-none focus:border-green-400" placeholder="해커 닉네임">
+                    <button id="save-btn" class="btn-action px-4 rounded text-sm">기록 전송</button>
+                </div>
+            </div>
+            <button id="restart-btn" class="btn-secondary w-full py-4 rounded-xl uppercase orbitron text-xl">메인 프레임 재접속</button>
         </div>
     </div>
 
-    <script>
-        // --- DOM Elements ---
-        const startScreen = document.getElementById('start-screen');
-        const gameScreen = document.getElementById('game-screen');
-        const resultScreen = document.getElementById('result-screen');
-        const timerBar = document.getElementById('timer-bar');
-        const timerText = document.getElementById('timer-text');
-        const noticeBoxSmall = document.getElementById('notice-box-small');
-        const msgBox = document.getElementById('msg-box');
-        const equationDisplay = document.getElementById('equation-display');
-        const choiceContainer = document.getElementById('choice-container');
-        const inputContainer = document.getElementById('input-container');
-        const instrModal = document.getElementById('instruction-modal');
-        const modalText = document.getElementById('modal-text');
-        const modalCloseBtn = document.getElementById('modal-close-btn');
-        const gaugeBar = document.getElementById('gauge-bar');
-        const finalRankText = document.getElementById('final-rank-text');
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, query, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-        // --- Game State ---
-        let score = 0;
-        let level = 1;
-        let timeLeft = 120;
-        let currentMaxTime = 120;
-        let timerInterval;
-        let currentAnswers = { x: 0, y: 0 };
-        let currentProblemType = 'choice'; 
-        let isPaused = false;
-        let focusedInputId = 'input-x';
-        let lastProblemKey = ""; 
+    // 2. Firebase Config (사용자 정보 적용)
+    const firebaseConfig = {
+        apiKey: "AIzaSyDMcRf_D4ajjJWxaHS98-fX-CWHJCBHDAk",
+        authDomain: "duru001-b5129.firebaseapp.com",
+        databaseURL: "https://duru001-b5129-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "duru001-b5129",
+        storageBucket: "duru001-b5129.firebasestorage.app",
+        messagingSenderId: "196539259225",
+        appId: "1:196539259225:web:74bc126eb12d6f1c481448",
+        measurementId: "G-J5ZNLLLQ3E"
+    };
 
-        // Input Focus Handling
-        document.getElementById('input-x').onclick = () => { focusedInputId = 'input-x'; updateInputStyles(); };
-        document.getElementById('input-y').onclick = () => { focusedInputId = 'input-y'; updateInputStyles(); };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const appId = 'equation-breaker-final';
+    let user = null;
 
-        function updateInputStyles() {
-            const ix = document.getElementById('input-x');
-            const iy = document.getElementById('input-y');
-            ix.style.borderColor = focusedInputId === 'input-x' ? '#00ff9d' : '#374151';
-            iy.style.borderColor = focusedInputId === 'input-y' ? '#00ff9d' : '#374151';
-        }
-
-        window.handleKey = (key) => {
-            if (isPaused) return;
-            const input = document.getElementById(focusedInputId);
-            if (!input) return;
-            if (key === 'del') input.value = input.value.slice(0, -1);
-            else if (key === 'clear') input.value = '';
-            else {
-                if ((key === '.' || key === '/') && input.value.includes(key)) return;
-                input.value += key;
-            }
-        };
-
-        function evalValue(str) {
-            if (!str) return NaN;
-            if (str.includes('/')) {
-                const parts = str.split('/');
-                if (parts.length === 2 && parts[1] !== '0') return parseFloat(parts[0]) / parseFloat(parts[1]);
-                return NaN;
-            }
-            return parseFloat(str);
-        }
-
-        function showMessage(text, isError = false) {
-            msgBox.innerText = text;
-            msgBox.style.color = isError ? '#ff4d4d' : '#00ff9d';
-            msgBox.classList.remove('opacity-0');
-            setTimeout(() => msgBox.classList.add('opacity-0'), 2000);
-        }
-
-        function showPopup(htmlContent, callback) {
-            isPaused = true;
-            modalText.innerHTML = htmlContent;
-            instrModal.classList.remove('hidden');
-            modalCloseBtn.onclick = () => {
-                instrModal.classList.add('hidden');
-                isPaused = false;
-                if (callback) callback();
-            };
-        }
-
-        function getNonZeroRand(min, max) {
-            let val;
-            do { val = Math.floor(Math.random() * (max - min + 1)) + min; } while (val === 0);
-            return val;
-        }
-
-        function generateProblem() {
-            if (level <= 12) currentMaxTime = 120;
-            else {
-                currentMaxTime = Math.max(10, 120 - (level - 12) * 5);
-                noticeBoxSmall.innerText = `TIMER REDUCTION ACTIVE: ${currentMaxTime}s`;
-                noticeBoxSmall.classList.add('text-yellow-500');
-            }
-            timeLeft = currentMaxTime;
-
-            const popups = {
-                4: '보안이 강화되었습니다. 제시되는 연립 일차방정식의 해를 직접 입력해야 합니다.',
-                7: '보안이 강화되었습니다. 제시되는 연립 일차방정식에 괄호가 포함됩니다.',
-                10: '보안이 최고 수준으로 올랐습니다. 이제부터는 분수 계수와 소수 계수가 포함됩니다.',
-                13: '이제부터는 시간 싸움입니다. 매 단계마다 제한 시간을 5초씩 줄입니다. 또한 복합 보안 장치가 출현합니다.'
-            };
-
-            if (popups[level]) showPopup(popups[level], actualGenerate);
-            else actualGenerate();
-        }
-
-        function actualGenerate() {
-            let x, y, probKey;
-            // Always generate INTEGER answers
-            do {
-                const range = 5 + Math.floor(level / 4);
-                x = getNonZeroRand(-range, range);
-                y = getNonZeroRand(-range, range);
-                probKey = `${level}_${x}_${y}`;
-            } while (probKey === lastProblemKey);
-            
-            lastProblemKey = probKey;
-            currentAnswers = { x, y };
-
-            if (level <= 3) { currentProblemType = 'choice'; generateLevel1_3(x, y); }
-            else if (level <= 6) { currentProblemType = 'input'; generateLevelBasicSim(x, y); }
-            else if (level <= 9) { currentProblemType = 'input'; generateLevelParentheses(x, y); }
-            else if (level <= 12) { currentProblemType = 'input'; generateLevelComplex(x, y); }
-            else { currentProblemType = 'input'; generateLevelExtreme(x, y); }
-        }
-
-        function renderEquation(eq1, eq2 = null) {
-            equationDisplay.innerHTML = `<p class="text-2xl font-bold text-white orbitron animate-fade-in">${eq1}</p>`;
-            if (eq2) equationDisplay.innerHTML += `<p class="text-2xl font-bold text-white orbitron animate-fade-in">${eq2}</p>`;
-        }
-
-        function fmt(coeff, varName, isFirst = false) {
-            if (coeff === 0) return "";
-            let sign = coeff > 0 ? (isFirst ? "" : " + ") : (isFirst ? "-" : " - ");
-            let val = Math.abs(coeff);
-            let displayVal = val === 1 ? "" : (Number.isInteger(val) ? val : val.toFixed(1));
-            return `${sign}${displayVal}${varName}`;
-        }
-
-        function generateLevel1_3(ansX, ansY) {
-            const a = getNonZeroRand(1, 5);
-            const b = getNonZeroRand(1, 5);
-            const c = (a * ansX + b * ansY);
-            renderEquation(`${a}x + ${b}y = ${c}`);
-            choiceContainer.innerHTML = '';
-            choiceContainer.classList.remove('hidden');
-            inputContainer.classList.add('hidden');
-            const choices = [{x: ansX, y: ansY}];
-            while (choices.length < 4) {
-                const rx = ansX + getNonZeroRand(-3, 3);
-                const ry = ansY + getNonZeroRand(-3, 3);
-                if (!choices.some(ch => ch.x === rx && ch.y === ry) && (a * rx + b * ry !== c)) choices.push({x: rx, y: ry});
-            }
-            choices.sort(() => Math.random() - 0.5).forEach(ch => {
-                const btn = document.createElement('button');
-                btn.className = 'btn-choice py-3 rounded-lg orbitron text-sm font-bold';
-                btn.innerText = `(${ch.x}, ${ch.y})`;
-                btn.onclick = () => checkAnswer(ch.x, ch.y);
-                choiceContainer.appendChild(btn);
+    // --- Firebase Initialization ---
+    const initGame = async () => {
+        try {
+            await signInAnonymously(auth);
+            onAuthStateChanged(auth, (u) => { 
+                user = u; 
+                if(u) fetchRankings(); 
             });
+        } catch (e) {
+            console.error("인증 실패:", e);
         }
+    };
+    initGame();
 
-        function generateLevelBasicSim(ansX, ansY) {
-            let a, b, d, e;
-            do { a = getNonZeroRand(1, 4); b = getNonZeroRand(-4, 4); d = getNonZeroRand(1, 4); e = getNonZeroRand(-4, 4); } while (a * e === b * d);
-            renderEquation(`${fmt(a, 'x', true)}${fmt(b, 'y')} = ${a * ansX + b * ansY}`, `${fmt(d, 'x', true)}${fmt(e, 'y')} = ${d * ansX + e * ansY}`);
-            setupInputMode();
+    // --- DOM Elements ---
+    const startScreen = document.getElementById('start-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const timerBar = document.getElementById('timer-bar');
+    const timerText = document.getElementById('timer-text');
+    const equationDisplay = document.getElementById('equation-display');
+    const choiceContainer = document.getElementById('choice-container');
+    const inputContainer = document.getElementById('input-container');
+    const instrModal = document.getElementById('instruction-modal');
+    const modalText = document.getElementById('modal-text');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    const rankModal = document.getElementById('rank-modal');
+    const rankingList = document.getElementById('ranking-list');
+
+    // --- Game State ---
+    let score = 0, level = 1, timeLeft = 120, currentMaxTime = 120, timerInterval;
+    let currentAnswers = { x: 0, y: 0 }, isPaused = false, focusedInputId = 'input-x', lastProblemKey = "";
+
+    // --- Keypad & Input ---
+    document.getElementById('input-x').onclick = () => { focusedInputId = 'input-x'; updateInputStyles(); };
+    document.getElementById('input-y').onclick = () => { focusedInputId = 'input-y'; updateInputStyles(); };
+    function updateInputStyles() {
+        document.getElementById('input-x').style.borderColor = focusedInputId === 'input-x' ? '#00ff9d' : '#374151';
+        document.getElementById('input-y').style.borderColor = focusedInputId === 'input-y' ? '#00ff9d' : '#374151';
+    }
+    window.handleKey = (key) => {
+        if (isPaused) return;
+        const input = document.getElementById(focusedInputId);
+        if (key === 'del') input.value = input.value.slice(0, -1);
+        else if (key === 'clear') input.value = '';
+        else {
+            if ((key === '.' || key === '/') && input.value.includes(key)) return;
+            input.value += key;
         }
+    };
 
-        function generateLevelParentheses(ansX, ansY) {
-            let a = getNonZeroRand(2, 4), b = getNonZeroRand(-3, 3), k = getNonZeroRand(-3, 3);
-            const isX = Math.random() > 0.5;
-            let eq1 = isX ? `${a}(x ${k >= 0 ? '+' : '-'} ${Math.abs(k)}) ${b > 0 ? '+' : '-'} ${Math.abs(b)}y = ${a * (ansX + k) + b * ansY}` : `${a}x ${b > 0 ? '+' : '-'} ${Math.abs(b)}(y ${k >= 0 ? '+' : '-'} ${Math.abs(k)}) = ${a * ansX + b * (ansY + k)}`;
-            renderEquation(eq1, `x + y = ${ansX + ansY}`);
-            setupInputMode();
+    function evalValue(str) {
+        if (!str) return NaN;
+        if (str.includes('/')) {
+            const parts = str.split('/');
+            return parts.length === 2 && parts[1] !== '0' ? parseFloat(parts[0]) / parseFloat(parts[1]) : NaN;
         }
+        return parseFloat(str);
+    }
 
-        function generateLevelComplex(ansX, ansY) {
-            const isDecimal = Math.random() > 0.5;
-            if (isDecimal) {
-                let a = getNonZeroRand(1, 9) / 10, b = getNonZeroRand(1, 9) / 10;
-                renderEquation(`${a}x + ${b}y = ${(a * ansX + b * ansY).toFixed(2)}`, `x - y = ${ansX - ansY}`);
-            } else {
-                let den = getNonZeroRand(2, 5);
-                renderEquation(`x/${den} + y = ${(ansX / den + ansY).toFixed(2)}`, `x + y = ${ansX + ansY}`);
-            }
-            setupInputMode();
+    // --- Problem Logic ---
+    function getNonZeroRand(min, max) {
+        let v; do { v = Math.floor(Math.random() * (max - min + 1)) + min; } while (v === 0); return v;
+    }
+
+    function generateProblem() {
+        if (level <= 12) currentMaxTime = 120;
+        else currentMaxTime = Math.max(10, 120 - (level - 12) * 5);
+        timeLeft = currentMaxTime;
+
+        const popups = {
+            4: '보안이 강화되었습니다. 연립방정식의 해를 직접 입력하십시오.',
+            7: '보안 등급 상승. 괄호가 포함된 연립방정식이 출현합니다.',
+            10: '최고 수준 보안. 분수와 소수 계수가 포함됩니다.',
+            13: '긴급! 시스템 가열 중. 이제부터 시간이 급격히 줄어듭니다.'
+        };
+        if (popups[level]) showPopup(popups[level], actualGenerate); else actualGenerate();
+    }
+
+    function actualGenerate() {
+        let x, y, probKey;
+        do {
+            const range = 5 + Math.floor(level / 4);
+            x = getNonZeroRand(-range, range); y = getNonZeroRand(-range, range);
+            probKey = `${level}_${x}_${y}`;
+        } while (probKey === lastProblemKey);
+        lastProblemKey = probKey; currentAnswers = { x, y };
+
+        if (level <= 3) generateLevel1_3(x, y);
+        else if (level <= 6) generateLevelBasicSim(x, y);
+        else if (level <= 9) generateLevelParentheses(x, y);
+        else if (level <= 12) generateLevelComplex(x, y);
+        else generateLevelExtreme(x, y);
+    }
+
+    function fmt(coeff, v, first = false) {
+        if (coeff === 0) return "";
+        let s = coeff > 0 ? (first ? "" : " + ") : (first ? "-" : " - ");
+        let val = Math.abs(coeff);
+        let d = val === 1 ? "" : (Number.isInteger(val) ? val : val.toFixed(1));
+        return `${s}${d}${v}`;
+    }
+
+    function renderEquation(eq1, eq2 = null) {
+        equationDisplay.innerHTML = `<p class="text-2xl font-bold text-white orbitron animate-fade-in">${eq1}</p>`;
+        if (eq2) equationDisplay.innerHTML += `<p class="text-2xl font-bold text-white orbitron animate-fade-in">${eq2}</p>`;
+    }
+
+    function generateLevel1_3(ansX, ansY) {
+        const a = getNonZeroRand(1, 5), b = getNonZeroRand(1, 5), c = (a * ansX + b * ansY);
+        renderEquation(`${a}x + ${b}y = ${c}`);
+        choiceContainer.innerHTML = ''; choiceContainer.classList.remove('hidden'); inputContainer.classList.add('hidden');
+        const choices = [{x: ansX, y: ansY}];
+        while (choices.length < 4) {
+            const rx = ansX + getNonZeroRand(-3, 3), ry = ansY + getNonZeroRand(-3, 3);
+            if (!choices.some(ch => ch.x === rx && ch.y === ry) && (a * rx + b * ry !== c)) choices.push({x: rx, y: ry});
         }
+        choices.sort(() => Math.random() - 0.5).forEach(ch => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-choice py-3 rounded-lg orbitron text-sm font-bold';
+            btn.innerText = `(${ch.x}, ${ch.y})`;
+            btn.onclick = () => checkAnswer(ch.x, ch.y);
+            choiceContainer.appendChild(btn);
+        });
+    }
 
-        function generateLevelExtreme(ansX, ansY) {
-            let a = getNonZeroRand(1, 5) / 10, k = getNonZeroRand(-2, 2), den = getNonZeroRand(2, 4);
-            renderEquation(`${a}(x ${k >= 0 ? '+' : '-'} ${Math.abs(k)}) + 0.5y = ${(a * (ansX + k) + 0.5 * ansY).toFixed(2)}`, `x/${den} + y = ${(ansX / den + ansY).toFixed(2)}`);
-            setupInputMode();
+    function generateLevelBasicSim(ansX, ansY) {
+        let a, b, d, e;
+        do { a = getNonZeroRand(1, 4); b = getNonZeroRand(-4, 4); d = getNonZeroRand(1, 4); e = getNonZeroRand(-4, 4); } while (a * e === b * d);
+        renderEquation(`${fmt(a, 'x', true)}${fmt(b, 'y')} = ${a * ansX + b * ansY}`, `${fmt(d, 'x', true)}${fmt(e, 'y')} = ${d * ansX + e * ansY}`);
+        setupInputMode();
+    }
+
+    function generateLevelParentheses(ansX, ansY) {
+        let a = getNonZeroRand(2, 4), b = getNonZeroRand(-3, 3), k = getNonZeroRand(-3, 3);
+        const isX = Math.random() > 0.5;
+        let eq1 = isX ? `${a}(x ${k >= 0 ? '+' : '-'} ${Math.abs(k)}) ${b > 0 ? '+' : '-'} ${Math.abs(b)}y = ${a * (ansX + k) + b * ansY}` : `${a}x ${b > 0 ? '+' : '-'} ${Math.abs(b)}(y ${k >= 0 ? '+' : '-'} ${Math.abs(k)}) = ${a * ansX + b * (ansY + k)}`;
+        renderEquation(eq1, `x + y = ${ansX + ansY}`);
+        setupInputMode();
+    }
+
+    function generateLevelComplex(ansX, ansY) {
+        const isDec = Math.random() > 0.5;
+        if (isDec) {
+            let a = getNonZeroRand(1, 9) / 10, b = getNonZeroRand(1, 9) / 10;
+            renderEquation(`${a}x + ${b}y = ${(a * ansX + b * ansY).toFixed(2)}`, `x - y = ${ansX - ansY}`);
+        } else {
+            let den = getNonZeroRand(2, 5);
+            renderEquation(`x/${den} + y = ${(ansX / den + ansY).toFixed(2)}`, `x + y = ${ansX + ansY}`);
         }
+        setupInputMode();
+    }
 
-        function setupInputMode() {
-            choiceContainer.classList.add('hidden');
-            inputContainer.classList.remove('hidden');
-            document.getElementById('input-x').value = '';
-            document.getElementById('input-y').value = '';
-            focusedInputId = 'input-x';
-            updateInputStyles();
+    function generateLevelExtreme(ansX, ansY) {
+        let a = getNonZeroRand(1, 5) / 10, k = getNonZeroRand(-2, 2), den = getNonZeroRand(2, 4);
+        renderEquation(`${a}(x ${k >= 0 ? '+' : '-'} ${Math.abs(k)}) + 0.5y = ${(a * (ansX + k) + 0.5 * ansY).toFixed(2)}`, `x/${den} + y = ${(ansX / den + ansY).toFixed(2)}`);
+        setupInputMode();
+    }
+
+    function setupInputMode() {
+        choiceContainer.classList.add('hidden'); inputContainer.classList.remove('hidden');
+        document.getElementById('input-x').value = ''; document.getElementById('input-y').value = '';
+        focusedInputId = 'input-x'; updateInputStyles();
+    }
+
+    function checkAnswer(xi, yi) {
+        if (isPaused) return;
+        const xv = typeof xi === 'string' ? evalValue(xi) : xi, yv = typeof yi === 'string' ? evalValue(yi) : yi;
+        if (isNaN(xv) || isNaN(yv)) return;
+        if (Math.abs(xv - currentAnswers.x) < 0.01 && Math.abs(yv - currentAnswers.y) < 0.01) {
+            score += 100 + (timeLeft * 5); level += 1; generateProblem(); updateUI();
+        } else {
+            timeLeft -= 10; if (timeLeft <= 0) endGame();
         }
+    }
 
-        function checkAnswer(xIn, yIn) {
+    function getRankName(lv) {
+        if (lv >= 19) return "챌린저"; if (lv >= 16) return "마스터"; if (lv >= 13) return "다이아";
+        if (lv >= 10) return "플레티넘"; if (lv >= 7) return "골드"; if (lv >= 4) return "실버"; return "브론즈";
+    }
+
+    function updateUI() {
+        document.getElementById('score-display').innerText = Math.floor(score).toString().padStart(4, '0');
+        document.getElementById('level-display').innerText = level;
+        document.getElementById('rank-display').innerText = getRankName(level) + " 해커";
+    }
+
+    const startTimer = () => {
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
             if (isPaused) return;
-            const xVal = typeof xIn === 'string' ? evalValue(xIn) : xIn;
-            const yVal = typeof yIn === 'string' ? evalValue(yIn) : yIn;
-            if (isNaN(xVal) || isNaN(yVal)) return showMessage("해독 코드를 입력하세요", true);
-            if (Math.abs(xVal - currentAnswers.x) < 0.01 && Math.abs(yVal - currentAnswers.y) < 0.01) {
-                score += 100 + (timeLeft * 5);
-                level += 1;
-                showMessage("시스템 통과! 다음 노드 접속");
-                generateProblem();
-                updateUI();
-            } else {
-                timeLeft -= 10;
-                showMessage("해독 실패! 보안 시스템 역추적 중", true);
-                if (timeLeft <= 0) endGame();
-            }
-        }
+            timeLeft -= 0.1;
+            const pct = (timeLeft / currentMaxTime) * 100;
+            timerBar.style.width = `${pct}%`;
+            timerText.innerText = `${Math.ceil(timeLeft)}s`;
+            if (timeLeft <= 10) timerBar.style.background = '#ef4444'; else timerBar.style.background = '#00ff9d';
+            if (timeLeft <= 0) endGame();
+        }, 100);
+    };
 
-        function getRankName(lv) {
-            if (lv >= 19) return "챌린저";
-            if (lv >= 16) return "마스터";
-            if (lv >= 13) return "다이아";
-            if (lv >= 10) return "플레티넘";
-            if (lv >= 7) return "골드";
-            if (lv >= 4) return "실버";
-            return "브론즈";
-        }
+    const endGame = () => {
+        clearInterval(timerInterval); gameScreen.classList.add('hidden'); resultScreen.classList.remove('hidden');
+        document.getElementById('final-score').innerText = Math.floor(score);
+        document.getElementById('final-level').innerText = level;
+        const rn = getRankName(level);
+        document.getElementById('final-rank-text').innerText = `당신의 계급은 ${rn} 해커입니다.`;
+        const ph = Math.min(100, Math.max(5, (level / 20) * 100));
+        const gb = document.getElementById('gauge-bar');
+        gb.style.setProperty('--final-height', `${ph}%`);
+        gb.classList.add('animate-fill-up');
+        
+        const labels = document.querySelectorAll('.rank-label');
+        const map = {"챌린저": "challenger", "마스터": "master", "다이아": "diamond", "플레티넘": "platinum", "골드": "gold", "실버": "silver", "브론즈": "bronze"};
+        labels.forEach(l => { if(l.innerText.toLowerCase() === map[rn]) l.classList.add('active'); else l.classList.remove('active'); });
+    };
 
-        function updateUI() {
-            document.getElementById('score-display').innerText = Math.floor(score).toString().padStart(4, '0');
-            document.getElementById('level-display').innerText = level;
-            document.getElementById('rank-display').innerText = getRankName(level) + " 해커";
-        }
+    function showPopup(html, callback) {
+        isPaused = true; modalText.innerHTML = html; instrModal.classList.remove('hidden');
+        modalCloseBtn.onclick = () => { instrModal.classList.add('hidden'); isPaused = false; if (callback) callback(); };
+    }
 
-        function startTimer() {
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                if (isPaused) return;
-                timeLeft -= 0.1;
-                const pct = (timeLeft / currentMaxTime) * 100;
-                timerBar.style.width = `${pct}%`;
-                timerText.innerText = `${Math.ceil(timeLeft)}s`;
-                if (timeLeft <= 10) timerBar.classList.add('!bg-red-500');
-                else timerBar.classList.remove('!bg-red-500');
-                if (timeLeft <= 0) endGame();
-            }, 100);
-        }
-
-        function endGame() {
-            clearInterval(timerInterval);
-            gameScreen.classList.add('hidden');
-            resultScreen.classList.remove('hidden');
-            
-            const finalScoreEl = document.getElementById('final-score');
-            const finalLevelEl = document.getElementById('final-level');
-            finalScoreEl.innerText = Math.floor(score);
-            finalLevelEl.innerText = level;
-
-            const rankName = getRankName(level);
-            finalRankText.innerText = `당신의 계급은 ${rankName} 해커입니다.`;
-
-            // Calculate Gauge Height (mapping levels to 0-100%)
-            // We use levels 1-20 as the gauge range
-            const pctHeight = Math.min(100, Math.max(5, (level / 20) * 100));
-            gaugeBar.style.setProperty('--final-height', `${pctHeight}%`);
-            
-            // Highlight Labels
-            const labels = document.querySelectorAll('.rank-label');
-            const englishRank = {
-                "챌린저": "challenger", "마스터": "master", "다이아": "diamond",
-                "플레티넘": "platinum", "골드": "gold", "실버": "silver", "브론즈": "bronze"
-            }[rankName];
-
-            labels.forEach(label => {
-                if (label.innerText.toLowerCase() === englishRank) {
-                    label.classList.add('active');
-                } else {
-                    label.classList.remove('active');
+    // --- Firebase Functions (Correct Path Usage) ---
+    async function fetchRankings() {
+        if (!user) return;
+        const rankRef = collection(db, 'artifacts', appId, 'public', 'data', 'rankings');
+        try {
+            // Rule 2: Fetch and sort in memory
+            onSnapshot(query(rankRef), (snapshot) => {
+                const data = [];
+                snapshot.forEach(doc => data.push(doc.data()));
+                data.sort((a, b) => b.score - a.score);
+                
+                rankingList.innerHTML = '';
+                if(data.length === 0) {
+                    rankingList.innerHTML = '<p class="text-center text-gray-500 italic">랭킹이 비어있습니다. 첫 기록의 주인공이 되세요!</p>';
+                    return;
                 }
+
+                data.slice(0, 10).forEach((entry, idx) => {
+                    const row = document.createElement('div');
+                    row.className = `flex justify-between items-center p-2 rounded bg-white/5 border border-white/10`;
+                    row.innerHTML = `<span class="orbitron text-gray-500 w-6">${idx+1}</span><span class="flex-1 ml-2 font-bold truncate">${entry.name}</span><span class="text-green-400 font-bold ml-2">Lv.${entry.level} | ${entry.score}</span>`;
+                    rankingList.appendChild(row);
+                });
             });
+        } catch (e) { console.error("Ranking fetch failed:", e); }
+    }
+
+    async function saveScore() {
+        const ni = document.getElementById('hacker-name');
+        const name = ni.value.trim();
+        if (!name) return;
+        if (!user) return;
+        
+        try {
+            const rankDoc = doc(db, 'artifacts', appId, 'public', 'data', 'rankings', user.uid);
+            await setDoc(rankDoc, {
+                name: name,
+                score: Math.floor(score),
+                level: level,
+                uid: user.uid,
+                timestamp: Date.now()
+            });
+            document.getElementById('save-ranking-section').innerHTML = '<p class="text-green-400 font-bold italic">기록이 메인 프레임에 전송되었습니다.</p>';
+        } catch (e) {
+            console.error("저장 실패:", e);
         }
+    }
 
-        document.getElementById('start-btn').onclick = () => {
-            const guide = `
-                <div class='space-y-3 text-gray-200 text-sm'>
-                    <p>1. 당신은 세계 최고의 해커가 되기 위해 시스템에 접속하였습니다. 연립방정식 보안 장치를 해독하십시오.</p>
-                    <p>2. <strong>해커 등급 시스템:</strong> 당신의 실력에 따라 등급이 상승합니다.<br>
-                       <span class='text-green-400 font-bold'>브론즈 → 실버(Lv.4) → 골드(Lv.7) → 플래티넘(Lv.10) → 다이아(Lv.13) → 마스터(Lv.16) → 챌린저(Lv.19)</span></p>
-                    <p>3. 레벨 1~3은 순서쌍 선택, 레벨 4부터는 직접 입력 방식입니다. <strong>정답은 항상 정수 범위</strong> 내에 있습니다.</p>
-                    <p>4. 레벨 12까지는 120초가 주어지며, 레벨 13부터는 제한 시간이 5초씩 줄어듭니다.</p>
-                    <p>5. 보안 수준이 올라감에 따라 괄호, 소수, 분수 계수가 포함된 복잡한 보안 장치가 나타납니다.</p>
-                </div>
-            `;
-            showPopup(guide, () => {
-                score = 0; level = 1;
-                startScreen.classList.add('hidden');
-                gameScreen.classList.remove('hidden');
-                generateProblem();
-                updateUI();
-                startTimer();
-            });
-        };
+    // --- UI Events ---
+    document.getElementById('start-btn').onclick = () => {
+        const guide = `<div class='space-y-3 text-gray-200 text-sm'>
+            <p>1. 당신은 세계 최고의 해커가 되기 위해 시스템에 접속하였습니다. 보안 장치를 해독하십시오.</p>
+            <p>2. <strong>해커 등급 시스템:</strong> 당신의 실력에 따라 등급이 상승합니다.<br><span class='text-green-400 font-bold'>브론즈 → 실버(Lv.4) → 골드(Lv.7) → 플래티넘(Lv.10) → 다이아(Lv.13) → 마스터(Lv.16) → 챌린저(Lv.19)</span></p>
+            <p>3. 모든 정답은 <strong>정수</strong>입니다. (분수/소수 계수는 나올 수 있습니다)</p>
+            <p>4. 해킹 완료 후 글로벌 랭킹에 본인의 업적을 기록할 수 있습니다.</p>
+        </div>`;
+        showPopup(guide, () => { score = 0; level = 1; startScreen.classList.add('hidden'); gameScreen.classList.remove('hidden'); generateProblem(); updateUI(); startTimer(); });
+    };
+    document.getElementById('view-rank-btn').onclick = () => rankModal.classList.remove('hidden');
+    document.getElementById('rank-modal-close').onclick = () => rankModal.classList.add('hidden');
+    document.getElementById('submit-btn').onclick = () => { const ix = document.getElementById('input-x'), iy = document.getElementById('input-y'); checkAnswer(ix.value, iy.value); };
+    document.getElementById('save-btn').onclick = saveScore;
+    document.getElementById('restart-btn').onclick = () => location.reload();
 
-        document.getElementById('submit-btn').onclick = () => {
-            const ix = document.getElementById('input-x'), iy = document.getElementById('input-y');
-            checkAnswer(ix.value, iy.value);
-        };
-
-        document.getElementById('restart-btn').onclick = () => location.reload();
-    </script>
+</script>
 </body>
 </html>
