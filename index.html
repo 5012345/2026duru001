@@ -90,7 +90,9 @@
             from { height: 0%; }
             to { height: var(--final-height); }
         }
-        .animate-fill-up { animation: fillVertical 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-fill-up {
+            animation: fillVertical 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
 
         .rank-label {
             position: absolute;
@@ -102,11 +104,39 @@
             transition: color 0.5s;
         }
         .rank-label.active { color: #00ff9d; font-weight: bold; }
+
+        /* BGM Control UI */
+        #music-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 50%;
+            border: 1px solid #00ff9d;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #music-control:hover { background: rgba(0, 255, 157, 0.2); }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
     <div class="hacker-bg"></div>
+
+    <!-- BGM Element -->
+    <!-- GitHub에 bgm.mp3 파일을 같은 폴더에 올리세요 -->
+    <audio id="bgm-audio" loop>
+        <source src="bgm.mp3" type="audio/mpeg">
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" type="audio/mpeg"> <!-- 샘플용 링크 -->
+    </audio>
+
+    <!-- Music Toggle Button -->
+    <div id="music-control" onclick="toggleMusic()">
+        <svg id="music-on-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 10 0 0 1 0 7.07"></path></svg>
+        <svg id="music-off-icon" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+    </div>
 
     <!-- Instruction Modal -->
     <div id="instruction-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden">
@@ -202,7 +232,7 @@
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, query, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-    // 2. Firebase Config (사용자 정보 적용)
+    // --- Firebase Config (User's specific keys) ---
     const firebaseConfig = {
         apiKey: "AIzaSyDMcRf_D4ajjJWxaHS98-fX-CWHJCBHDAk",
         authDomain: "duru001-b5129.firebaseapp.com",
@@ -217,10 +247,26 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const appId = 'equation-breaker-final';
+    const appId = 'equation-breaker-final-v3'; // 버전 관리용 ID 변경
     let user = null;
 
-    // --- Firebase Initialization ---
+    const bgm = document.getElementById('bgm-audio');
+    const musicOnIcon = document.getElementById('music-on-icon');
+    const musicOffIcon = document.getElementById('music-off-icon');
+
+    // Music Control Logic
+    window.toggleMusic = () => {
+        if (bgm.paused) {
+            bgm.play();
+            musicOnIcon.classList.remove('hidden');
+            musicOffIcon.classList.add('hidden');
+        } else {
+            bgm.pause();
+            musicOnIcon.classList.add('hidden');
+            musicOffIcon.classList.remove('hidden');
+        }
+    };
+
     const initGame = async () => {
         try {
             await signInAnonymously(auth);
@@ -253,7 +299,7 @@
     let score = 0, level = 1, timeLeft = 120, currentMaxTime = 120, timerInterval;
     let currentAnswers = { x: 0, y: 0 }, isPaused = false, focusedInputId = 'input-x', lastProblemKey = "";
 
-    // --- Keypad & Input ---
+    // --- Keypad & Input Handling ---
     document.getElementById('input-x').onclick = () => { focusedInputId = 'input-x'; updateInputStyles(); };
     document.getElementById('input-y').onclick = () => { focusedInputId = 'input-y'; updateInputStyles(); };
     function updateInputStyles() {
@@ -280,7 +326,7 @@
         return parseFloat(str);
     }
 
-    // --- Problem Logic ---
+    // --- Math Logic ---
     function getNonZeroRand(min, max) {
         let v; do { v = Math.floor(Math.random() * (max - min + 1)) + min; } while (v === 0); return v;
     }
@@ -428,8 +474,7 @@
         document.getElementById('final-rank-text').innerText = `당신의 계급은 ${rn} 해커입니다.`;
         const ph = Math.min(100, Math.max(5, (level / 20) * 100));
         const gb = document.getElementById('gauge-bar');
-        gb.style.setProperty('--final-height', `${ph}%`);
-        gb.classList.add('animate-fill-up');
+        gb.style.height = `${ph}%`;
         
         const labels = document.querySelectorAll('.rank-label');
         const map = {"챌린저": "challenger", "마스터": "master", "다이아": "diamond", "플레티넘": "platinum", "골드": "gold", "실버": "silver", "브론즈": "bronze"};
@@ -438,26 +483,29 @@
 
     function showPopup(html, callback) {
         isPaused = true; modalText.innerHTML = html; instrModal.classList.remove('hidden');
-        modalCloseBtn.onclick = () => { instrModal.classList.add('hidden'); isPaused = false; if (callback) callback(); };
+        modalCloseBtn.onclick = () => { 
+            // 가이드를 닫을 때 음악 재생 시도 (브라우저 정책 준수)
+            if (bgm.paused) bgm.play();
+            instrModal.classList.add('hidden'); 
+            isPaused = false; 
+            if (callback) callback(); 
+        };
     }
 
-    // --- Firebase Functions (Correct Path Usage) ---
+    // --- Firestore Functions ---
     async function fetchRankings() {
         if (!user) return;
         const rankRef = collection(db, 'artifacts', appId, 'public', 'data', 'rankings');
         try {
-            // Rule 2: Fetch and sort in memory
             onSnapshot(query(rankRef), (snapshot) => {
                 const data = [];
                 snapshot.forEach(doc => data.push(doc.data()));
                 data.sort((a, b) => b.score - a.score);
-                
                 rankingList.innerHTML = '';
                 if(data.length === 0) {
-                    rankingList.innerHTML = '<p class="text-center text-gray-500 italic">랭킹이 비어있습니다. 첫 기록의 주인공이 되세요!</p>';
+                    rankingList.innerHTML = '<p class="text-center text-gray-500 italic">랭킹이 비어있습니다.</p>';
                     return;
                 }
-
                 data.slice(0, 10).forEach((entry, idx) => {
                     const row = document.createElement('div');
                     row.className = `flex justify-between items-center p-2 rounded bg-white/5 border border-white/10`;
@@ -473,20 +521,11 @@
         const name = ni.value.trim();
         if (!name) return;
         if (!user) return;
-        
         try {
             const rankDoc = doc(db, 'artifacts', appId, 'public', 'data', 'rankings', user.uid);
-            await setDoc(rankDoc, {
-                name: name,
-                score: Math.floor(score),
-                level: level,
-                uid: user.uid,
-                timestamp: Date.now()
-            });
+            await setDoc(rankDoc, { name: name, score: Math.floor(score), level: level, uid: user.uid, timestamp: Date.now() });
             document.getElementById('save-ranking-section').innerHTML = '<p class="text-green-400 font-bold italic">기록이 메인 프레임에 전송되었습니다.</p>';
-        } catch (e) {
-            console.error("저장 실패:", e);
-        }
+        } catch (e) { console.error("저장 실패:", e); }
     }
 
     // --- UI Events ---
@@ -495,16 +534,16 @@
             <p>1. 당신은 세계 최고의 해커가 되기 위해 시스템에 접속하였습니다. 보안 장치를 해독하십시오.</p>
             <p>2. <strong>해커 등급 시스템:</strong> 당신의 실력에 따라 등급이 상승합니다.<br><span class='text-green-400 font-bold'>브론즈 → 실버(Lv.4) → 골드(Lv.7) → 플래티넘(Lv.10) → 다이아(Lv.13) → 마스터(Lv.16) → 챌린저(Lv.19)</span></p>
             <p>3. 모든 정답은 <strong>정수</strong>입니다. (분수/소수 계수는 나올 수 있습니다)</p>
-            <p>4. 해킹 완료 후 글로벌 랭킹에 본인의 업적을 기록할 수 있습니다.</p>
+            <p>4. level 1에서 3까지는 주어진 방정식의 해가 되는 순서쌍을 찾으면 됩니다. level 4부터는 연립일차방정식이 나오고, 난이도는 점차 올라갑니다.</p>
+            <p>5. 해킹 완료 후 글로벌 랭킹에 본인의 업적을 기록할 수 있습니다.</p>
         </div>`;
         showPopup(guide, () => { score = 0; level = 1; startScreen.classList.add('hidden'); gameScreen.classList.remove('hidden'); generateProblem(); updateUI(); startTimer(); });
     };
-    document.getElementById('view-rank-btn').onclick = () => rankModal.classList.remove('hidden');
+    document.getElementById('view-rank-btn').onclick = () => { rankModal.classList.remove('hidden'); fetchRankings(); };
     document.getElementById('rank-modal-close').onclick = () => rankModal.classList.add('hidden');
     document.getElementById('submit-btn').onclick = () => { const ix = document.getElementById('input-x'), iy = document.getElementById('input-y'); checkAnswer(ix.value, iy.value); };
     document.getElementById('save-btn').onclick = saveScore;
     document.getElementById('restart-btn').onclick = () => location.reload();
-
 </script>
 </body>
 </html>
