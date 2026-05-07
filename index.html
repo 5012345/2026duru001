@@ -105,7 +105,6 @@
         }
         .rank-label.active { color: #00ff9d; font-weight: bold; }
 
-        /* BGM Control UI */
         #music-control {
             position: fixed;
             top: 20px;
@@ -283,6 +282,7 @@
         else { if ((key === '.' || key === '/') && input.value.includes(key)) return; input.value += key; }
     };
 
+    // --- Math Utility Functions ---
     function gcd(a, b) { return b === 0 ? Math.abs(a) : gcd(b, a % b); }
     function cleanNum(n) { return Number(n.toFixed(10)); }
     function toFraction(num) {
@@ -291,13 +291,26 @@
             let n = num * d;
             if (Math.abs(Math.round(n) - n) < 0.0001) {
                 let common = gcd(Math.round(n), d);
-                return `${Math.round(n) / common}/${d / common}`;
+                let numerator = Math.round(n) / common;
+                let denominator = d / common;
+                if (denominator === 1) return numerator.toString();
+                return `${numerator}/${denominator}`;
             }
         }
         return cleanNum(num).toString();
     }
 
     function getNonZeroRand(min, max) { let v; do { v = Math.floor(Math.random() * (max - min + 1)) + min; } while (v === 0); return v; }
+
+    // 계수 1 생략 포맷팅 함수 (핵심 수정 사항)
+    function fmtCoeff(coeff, v, first = false) {
+        if (coeff === 0) return "";
+        let s = coeff > 0 ? (first ? "" : " + ") : (first ? "-" : " - ");
+        let val = Math.abs(coeff);
+        // 계수 절대값이 1이면 숫자 생략
+        let d = val === 1 ? "" : (Number.isInteger(val) ? val : cleanNum(val));
+        return `${s}${d}${v}`;
+    }
 
     function generateProblem() {
         if (level <= 12) currentMaxTime = 120; else currentMaxTime = Math.max(10, 120 - (level - 12) * 5);
@@ -324,14 +337,6 @@
         else generateLevelExtreme(x, y);
     }
 
-    function fmtCoeff(coeff, v, first = false) {
-        if (coeff === 0) return "";
-        let s = coeff > 0 ? (first ? "" : " + ") : (first ? "-" : " - ");
-        let val = Math.abs(coeff);
-        let d = val === 1 ? "" : (Number.isInteger(val) ? val : cleanNum(val));
-        return `${s}${d}${v}`;
-    }
-
     function renderEquation(eq1, eq2 = null) {
         equationDisplay.innerHTML = `<p class="text-xl md:text-2xl font-bold text-white orbitron animate-fade-in">${eq1}</p>`;
         if (eq2) equationDisplay.innerHTML += `<p class="text-xl md:text-2xl font-bold text-white orbitron animate-fade-in">${eq2}</p>`;
@@ -346,7 +351,8 @@
         } while (key === lastCoeffKey);
         lastCoeffKey = key;
 
-        renderEquation(`${a}x + ${b}y = ${c}`);
+        // fmtCoeff 적용하여 1 생략
+        renderEquation(`${fmtCoeff(a, 'x', true)}${fmtCoeff(b, 'y')} = ${c}`);
         choiceContainer.innerHTML = ''; choiceContainer.classList.remove('hidden'); inputContainer.classList.add('hidden');
         const choices = [{x: ansX, y: ansY}];
         while (choices.length < 4) {
@@ -383,7 +389,8 @@
         } while (key === lastCoeffKey);
         lastCoeffKey = key;
 
-        let eq1 = `${a}(x ${k > 0 ? '+' : '-'} ${Math.abs(k)}) ${b > 0 ? '+' : '-'} ${Math.abs(b)}y = ${a * (ansX + k) + b * ansY}`;
+        // b가 1인 경우 fmtCoeff가 알아서 처리
+        let eq1 = `${a}(x ${k > 0 ? '+' : '-'} ${Math.abs(k)})${fmtCoeff(b, 'y')} = ${a * (ansX + k) + b * ansY}`;
         renderEquation(eq1, `x + y = ${ansX + ansY}`);
         setupInputMode();
     }
@@ -402,7 +409,7 @@
         } while (key === lastCoeffKey);
         lastCoeffKey = key;
 
-        if (isDec) renderEquation(`${cleanNum(a)}x + ${cleanNum(b)}y = ${cleanNum(a * ansX + b * ansY)}`, `x - y = ${ansX - ansY}`);
+        if (isDec) renderEquation(`${fmtCoeff(a, 'x', true)}${fmtCoeff(b, 'y')} = ${cleanNum(a * ansX + b * ansY)}`, `x - y = ${ansX - ansY}`);
         else renderEquation(`x/${den} + y = ${toFraction(ansX / den + ansY)}`, `x + y = ${ansX + ansY}`);
         setupInputMode();
     }
