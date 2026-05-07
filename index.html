@@ -126,10 +126,9 @@
     <div class="hacker-bg"></div>
 
     <!-- BGM Element -->
-    <!-- GitHub에 bgm.mp3 파일을 같은 폴더에 올리세요 -->
     <audio id="bgm-audio" loop>
         <source src="bgm.mp3" type="audio/mpeg">
-        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" type="audio/mpeg"> <!-- 샘플용 링크 -->
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" type="audio/mpeg">
     </audio>
 
     <!-- Music Toggle Button -->
@@ -218,9 +217,9 @@
             </div>
             <div id="save-ranking-section" class="mb-8">
                 <p class="text-xs text-gray-400 mb-2">당신의 명예를 기록하세요 (최대 10자)</p>
-                <div class="flex gap-2 max-w-xs mx-auto">
-                    <input type="text" id="hacker-name" maxlength="10" class="flex-1 bg-black/50 border border-gray-700 rounded p-2 text-white text-center focus:outline-none focus:border-green-400" placeholder="해커 닉네임">
-                    <button id="save-btn" class="btn-action px-4 rounded text-sm">기록 전송</button>
+                <div class="flex gap-2 max-w-sm mx-auto">
+                    <input type="text" id="hacker-name" maxlength="10" class="flex-1 bg-black/50 border border-gray-700 rounded p-3 text-white text-center focus:outline-none focus:border-green-400" placeholder="해커 닉네임">
+                    <button id="save-btn" class="btn-action px-6 py-3 rounded text-sm whitespace-nowrap flex-shrink-0">기록 등록</button>
                 </div>
             </div>
             <button id="restart-btn" class="btn-secondary w-full py-4 rounded-xl uppercase orbitron text-xl">메인 프레임 재접속</button>
@@ -230,9 +229,8 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, query, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, query, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-    // --- Firebase Config (User's specific keys) ---
     const firebaseConfig = {
         apiKey: "AIzaSyDMcRf_D4ajjJWxaHS98-fX-CWHJCBHDAk",
         authDomain: "duru001-b5129.firebaseapp.com",
@@ -247,59 +245,30 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const appId = 'equation-breaker-final-v3'; // 버전 관리용 ID 변경
+    const appId = 'equation-breaker-final-v7';
     let user = null;
 
     const bgm = document.getElementById('bgm-audio');
     const musicOnIcon = document.getElementById('music-on-icon');
     const musicOffIcon = document.getElementById('music-off-icon');
+    let isMusicManualPaused = false; 
 
-    // Music Control Logic
     window.toggleMusic = () => {
-        if (bgm.paused) {
-            bgm.play();
-            musicOnIcon.classList.remove('hidden');
-            musicOffIcon.classList.add('hidden');
-        } else {
-            bgm.pause();
-            musicOnIcon.classList.add('hidden');
-            musicOffIcon.classList.remove('hidden');
-        }
+        if (bgm.paused) { bgm.play().catch(()=>{}); isMusicManualPaused = false; musicOnIcon.classList.remove('hidden'); musicOffIcon.classList.add('hidden'); }
+        else { bgm.pause(); isMusicManualPaused = true; musicOnIcon.classList.add('hidden'); musicOffIcon.classList.remove('hidden'); }
     };
 
-    const initGame = async () => {
-        try {
-            await signInAnonymously(auth);
-            onAuthStateChanged(auth, (u) => { 
-                user = u; 
-                if(u) fetchRankings(); 
-            });
-        } catch (e) {
-            console.error("인증 실패:", e);
-        }
-    };
-    initGame();
+    onAuthStateChanged(auth, (u) => { user = u; if(u) fetchRankings(); });
+    signInAnonymously(auth);
 
-    // --- DOM Elements ---
-    const startScreen = document.getElementById('start-screen');
-    const gameScreen = document.getElementById('game-screen');
-    const resultScreen = document.getElementById('result-screen');
-    const timerBar = document.getElementById('timer-bar');
-    const timerText = document.getElementById('timer-text');
-    const equationDisplay = document.getElementById('equation-display');
-    const choiceContainer = document.getElementById('choice-container');
-    const inputContainer = document.getElementById('input-container');
-    const instrModal = document.getElementById('instruction-modal');
-    const modalText = document.getElementById('modal-text');
-    const modalCloseBtn = document.getElementById('modal-close-btn');
-    const rankModal = document.getElementById('rank-modal');
-    const rankingList = document.getElementById('ranking-list');
+    const startScreen = document.getElementById('start-screen'), gameScreen = document.getElementById('game-screen'), resultScreen = document.getElementById('result-screen');
+    const timerBar = document.getElementById('timer-bar'), timerText = document.getElementById('timer-text');
+    const equationDisplay = document.getElementById('equation-display'), choiceContainer = document.getElementById('choice-container'), inputContainer = document.getElementById('input-container');
+    const instrModal = document.getElementById('instruction-modal'), modalText = document.getElementById('modal-text'), modalCloseBtn = document.getElementById('modal-close-btn');
+    const rankModal = document.getElementById('rank-modal'), rankingList = document.getElementById('ranking-list');
 
-    // --- Game State ---
-    let score = 0, level = 1, timeLeft = 120, currentMaxTime = 120, timerInterval;
-    let currentAnswers = { x: 0, y: 0 }, isPaused = false, focusedInputId = 'input-x', lastProblemKey = "";
+    let score = 0, level = 1, timeLeft = 120, currentMaxTime = 120, timerInterval, currentAnswers = { x: 0, y: 0 }, isPaused = false, focusedInputId = 'input-x', lastProblemKey = "", lastCoeffKey = "";
 
-    // --- Keypad & Input Handling ---
     document.getElementById('input-x').onclick = () => { focusedInputId = 'input-x'; updateInputStyles(); };
     document.getElementById('input-y').onclick = () => { focusedInputId = 'input-y'; updateInputStyles(); };
     function updateInputStyles() {
@@ -311,48 +280,42 @@
         const input = document.getElementById(focusedInputId);
         if (key === 'del') input.value = input.value.slice(0, -1);
         else if (key === 'clear') input.value = '';
-        else {
-            if ((key === '.' || key === '/') && input.value.includes(key)) return;
-            input.value += key;
-        }
+        else { if ((key === '.' || key === '/') && input.value.includes(key)) return; input.value += key; }
     };
 
-    function evalValue(str) {
-        if (!str) return NaN;
-        if (str.includes('/')) {
-            const parts = str.split('/');
-            return parts.length === 2 && parts[1] !== '0' ? parseFloat(parts[0]) / parseFloat(parts[1]) : NaN;
+    function gcd(a, b) { return b === 0 ? Math.abs(a) : gcd(b, a % b); }
+    function cleanNum(n) { return Number(n.toFixed(10)); }
+    function toFraction(num) {
+        if (Number.isInteger(num)) return num.toString();
+        for (let d = 1; d <= 10; d++) {
+            let n = num * d;
+            if (Math.abs(Math.round(n) - n) < 0.0001) {
+                let common = gcd(Math.round(n), d);
+                return `${Math.round(n) / common}/${d / common}`;
+            }
         }
-        return parseFloat(str);
+        return cleanNum(num).toString();
     }
 
-    // --- Math Logic ---
-    function getNonZeroRand(min, max) {
-        let v; do { v = Math.floor(Math.random() * (max - min + 1)) + min; } while (v === 0); return v;
-    }
+    function getNonZeroRand(min, max) { let v; do { v = Math.floor(Math.random() * (max - min + 1)) + min; } while (v === 0); return v; }
 
     function generateProblem() {
-        if (level <= 12) currentMaxTime = 120;
-        else currentMaxTime = Math.max(10, 120 - (level - 12) * 5);
+        if (level <= 12) currentMaxTime = 120; else currentMaxTime = Math.max(10, 120 - (level - 12) * 5);
         timeLeft = currentMaxTime;
-
-        const popups = {
-            4: '보안이 강화되었습니다. 연립방정식의 해를 직접 입력하십시오.',
-            7: '보안 등급 상승. 괄호가 포함된 연립방정식이 출현합니다.',
-            10: '최고 수준 보안. 분수와 소수 계수가 포함됩니다.',
-            13: '긴급! 시스템 가열 중. 이제부터 시간이 급격히 줄어듭니다.'
-        };
+        const popups = { 4: '보안 강화. 연립방정식 해를 직접 입력하십시오.', 7: '보안 등급 상승. 다양한 괄호 구조가 출현합니다.', 10: '최고 수준 보안. 정밀한 분수와 소수 계수가 포함됩니다.', 13: '긴급! 시간이 가속됩니다.' };
         if (popups[level]) showPopup(popups[level], actualGenerate); else actualGenerate();
     }
 
     function actualGenerate() {
         let x, y, probKey;
-        do {
-            const range = 5 + Math.floor(level / 4);
-            x = getNonZeroRand(-range, range); y = getNonZeroRand(-range, range);
-            probKey = `${level}_${x}_${y}`;
+        do { 
+            const range = 4 + Math.floor(level / 5); 
+            x = getNonZeroRand(-range, range); 
+            y = getNonZeroRand(-range, range); 
+            probKey = `${level}_${x}_${y}`; 
         } while (probKey === lastProblemKey);
-        lastProblemKey = probKey; currentAnswers = { x, y };
+        lastProblemKey = probKey; 
+        currentAnswers = { x, y };
 
         if (level <= 3) generateLevel1_3(x, y);
         else if (level <= 6) generateLevelBasicSim(x, y);
@@ -361,21 +324,28 @@
         else generateLevelExtreme(x, y);
     }
 
-    function fmt(coeff, v, first = false) {
+    function fmtCoeff(coeff, v, first = false) {
         if (coeff === 0) return "";
         let s = coeff > 0 ? (first ? "" : " + ") : (first ? "-" : " - ");
         let val = Math.abs(coeff);
-        let d = val === 1 ? "" : (Number.isInteger(val) ? val : val.toFixed(1));
+        let d = val === 1 ? "" : (Number.isInteger(val) ? val : cleanNum(val));
         return `${s}${d}${v}`;
     }
 
     function renderEquation(eq1, eq2 = null) {
-        equationDisplay.innerHTML = `<p class="text-2xl font-bold text-white orbitron animate-fade-in">${eq1}</p>`;
-        if (eq2) equationDisplay.innerHTML += `<p class="text-2xl font-bold text-white orbitron animate-fade-in">${eq2}</p>`;
+        equationDisplay.innerHTML = `<p class="text-xl md:text-2xl font-bold text-white orbitron animate-fade-in">${eq1}</p>`;
+        if (eq2) equationDisplay.innerHTML += `<p class="text-xl md:text-2xl font-bold text-white orbitron animate-fade-in">${eq2}</p>`;
     }
 
     function generateLevel1_3(ansX, ansY) {
-        const a = getNonZeroRand(1, 5), b = getNonZeroRand(1, 5), c = (a * ansX + b * ansY);
+        let a, b, c, key;
+        do {
+            a = getNonZeroRand(1, 4); b = getNonZeroRand(1, 4);
+            c = (a * ansX + b * ansY);
+            key = `L1_${a}_${b}`;
+        } while (key === lastCoeffKey);
+        lastCoeffKey = key;
+
         renderEquation(`${a}x + ${b}y = ${c}`);
         choiceContainer.innerHTML = ''; choiceContainer.classList.remove('hidden'); inputContainer.classList.add('hidden');
         const choices = [{x: ansX, y: ansY}];
@@ -393,35 +363,63 @@
     }
 
     function generateLevelBasicSim(ansX, ansY) {
-        let a, b, d, e;
-        do { a = getNonZeroRand(1, 4); b = getNonZeroRand(-4, 4); d = getNonZeroRand(1, 4); e = getNonZeroRand(-4, 4); } while (a * e === b * d);
-        renderEquation(`${fmt(a, 'x', true)}${fmt(b, 'y')} = ${a * ansX + b * ansY}`, `${fmt(d, 'x', true)}${fmt(e, 'y')} = ${d * ansX + e * ansY}`);
+        let a, b, d, e, key;
+        do { 
+            a = getNonZeroRand(1, 3); b = getNonZeroRand(-3, 3); 
+            d = getNonZeroRand(1, 3); e = getNonZeroRand(-3, 3); 
+            key = `L4_${a}_${b}_${d}_${e}`;
+        } while (a * e === b * d || key === lastCoeffKey);
+        lastCoeffKey = key;
+
+        renderEquation(`${fmtCoeff(a, 'x', true)}${fmtCoeff(b, 'y')} = ${a * ansX + b * ansY}`, `${fmtCoeff(d, 'x', true)}${fmtCoeff(e, 'y')} = ${d * ansX + e * ansY}`);
         setupInputMode();
     }
 
     function generateLevelParentheses(ansX, ansY) {
-        let a = getNonZeroRand(2, 4), b = getNonZeroRand(-3, 3), k = getNonZeroRand(-3, 3);
-        const isX = Math.random() > 0.5;
-        let eq1 = isX ? `${a}(x ${k >= 0 ? '+' : '-'} ${Math.abs(k)}) ${b > 0 ? '+' : '-'} ${Math.abs(b)}y = ${a * (ansX + k) + b * ansY}` : `${a}x ${b > 0 ? '+' : '-'} ${Math.abs(b)}(y ${k >= 0 ? '+' : '-'} ${Math.abs(k)}) = ${a * ansX + b * (ansY + k)}`;
+        let a, b, k, key;
+        do {
+            a = getNonZeroRand(2, 3); b = getNonZeroRand(-2, 2); k = getNonZeroRand(-2, 2);
+            key = `L7_${a}_${b}_${k}`;
+        } while (key === lastCoeffKey);
+        lastCoeffKey = key;
+
+        let eq1 = `${a}(x ${k > 0 ? '+' : '-'} ${Math.abs(k)}) ${b > 0 ? '+' : '-'} ${Math.abs(b)}y = ${a * (ansX + k) + b * ansY}`;
         renderEquation(eq1, `x + y = ${ansX + ansY}`);
         setupInputMode();
     }
 
     function generateLevelComplex(ansX, ansY) {
+        let a, b, den, key;
         const isDec = Math.random() > 0.5;
-        if (isDec) {
-            let a = getNonZeroRand(1, 9) / 10, b = getNonZeroRand(1, 9) / 10;
-            renderEquation(`${a}x + ${b}y = ${(a * ansX + b * ansY).toFixed(2)}`, `x - y = ${ansX - ansY}`);
-        } else {
-            let den = getNonZeroRand(2, 5);
-            renderEquation(`x/${den} + y = ${(ansX / den + ansY).toFixed(2)}`, `x + y = ${ansX + ansY}`);
-        }
+        do {
+            if (isDec) {
+                a = getNonZeroRand(1, 5) / 10; b = getNonZeroRand(1, 5) / 10;
+                key = `L10D_${a}_${b}`;
+            } else {
+                den = [2, 5][Math.floor(Math.random() * 2)];
+                key = `L10F_${den}`;
+            }
+        } while (key === lastCoeffKey);
+        lastCoeffKey = key;
+
+        if (isDec) renderEquation(`${cleanNum(a)}x + ${cleanNum(b)}y = ${cleanNum(a * ansX + b * ansY)}`, `x - y = ${ansX - ansY}`);
+        else renderEquation(`x/${den} + y = ${toFraction(ansX / den + ansY)}`, `x + y = ${ansX + ansY}`);
         setupInputMode();
     }
 
     function generateLevelExtreme(ansX, ansY) {
-        let a = getNonZeroRand(1, 5) / 10, k = getNonZeroRand(-2, 2), den = getNonZeroRand(2, 4);
-        renderEquation(`${a}(x ${k >= 0 ? '+' : '-'} ${Math.abs(k)}) + 0.5y = ${(a * (ansX + k) + 0.5 * ansY).toFixed(2)}`, `x/${den} + y = ${(ansX / den + ansY).toFixed(2)}`);
+        let a, k, den, key;
+        do {
+            a = [0.1, 0.2, 0.5][Math.floor(Math.random() * 3)]; 
+            k = getNonZeroRand(-2, 2); 
+            den = [2, 3, 4][Math.floor(Math.random() * 3)];
+            key = `L13_${a}_${k}_${den}`;
+        } while (key === lastCoeffKey);
+        lastCoeffKey = key;
+
+        let c1 = a * (ansX + k) + 0.5 * ansY;
+        let c2 = ansX / den + ansY;
+        renderEquation(`${cleanNum(a)}(x ${k >= 0 ? '+' : '-'} ${Math.abs(k)}) + 0.5y = ${toFraction(c1)}`, `x/${den} + y = ${toFraction(c2)}`);
         setupInputMode();
     }
 
@@ -433,13 +431,12 @@
 
     function checkAnswer(xi, yi) {
         if (isPaused) return;
-        const xv = typeof xi === 'string' ? evalValue(xi) : xi, yv = typeof yi === 'string' ? evalValue(yi) : yi;
+        const parseVal = (v) => { if(v.includes('/')) { let p = v.split('/'); return parseFloat(p[0])/parseFloat(p[1]); } return parseFloat(v); };
+        const xv = parseVal(xi.toString()), yv = parseVal(yi.toString());
         if (isNaN(xv) || isNaN(yv)) return;
         if (Math.abs(xv - currentAnswers.x) < 0.01 && Math.abs(yv - currentAnswers.y) < 0.01) {
             score += 100 + (timeLeft * 5); level += 1; generateProblem(); updateUI();
-        } else {
-            timeLeft -= 10; if (timeLeft <= 0) endGame();
-        }
+        } else { timeLeft -= 10; if (timeLeft <= 0) endGame(); }
     }
 
     function getRankName(lv) {
@@ -475,7 +472,6 @@
         const ph = Math.min(100, Math.max(5, (level / 20) * 100));
         const gb = document.getElementById('gauge-bar');
         gb.style.height = `${ph}%`;
-        
         const labels = document.querySelectorAll('.rank-label');
         const map = {"챌린저": "challenger", "마스터": "master", "다이아": "diamond", "플레티넘": "platinum", "골드": "gold", "실버": "silver", "브론즈": "bronze"};
         labels.forEach(l => { if(l.innerText.toLowerCase() === map[rn]) l.classList.add('active'); else l.classList.remove('active'); });
@@ -483,29 +479,18 @@
 
     function showPopup(html, callback) {
         isPaused = true; modalText.innerHTML = html; instrModal.classList.remove('hidden');
-        modalCloseBtn.onclick = () => { 
-            // 가이드를 닫을 때 음악 재생 시도 (브라우저 정책 준수)
-            if (bgm.paused) bgm.play();
-            instrModal.classList.add('hidden'); 
-            isPaused = false; 
-            if (callback) callback(); 
-        };
+        modalCloseBtn.onclick = () => { if (!isMusicManualPaused) bgm.play().catch(()=>{}); instrModal.classList.add('hidden'); isPaused = false; if (callback) callback(); };
     }
 
-    // --- Firestore Functions ---
     async function fetchRankings() {
         if (!user) return;
         const rankRef = collection(db, 'artifacts', appId, 'public', 'data', 'rankings');
         try {
             onSnapshot(query(rankRef), (snapshot) => {
-                const data = [];
-                snapshot.forEach(doc => data.push(doc.data()));
+                const data = []; snapshot.forEach(doc => data.push(doc.data()));
                 data.sort((a, b) => b.score - a.score);
                 rankingList.innerHTML = '';
-                if(data.length === 0) {
-                    rankingList.innerHTML = '<p class="text-center text-gray-500 italic">랭킹이 비어있습니다.</p>';
-                    return;
-                }
+                if(data.length === 0) { rankingList.innerHTML = '<p class="text-center text-gray-500 italic">랭킹이 비어있습니다.</p>'; return; }
                 data.slice(0, 10).forEach((entry, idx) => {
                     const row = document.createElement('div');
                     row.className = `flex justify-between items-center p-2 rounded bg-white/5 border border-white/10`;
@@ -517,24 +502,21 @@
     }
 
     async function saveScore() {
-        const ni = document.getElementById('hacker-name');
-        const name = ni.value.trim();
-        if (!name) return;
-        if (!user) return;
+        const ni = document.getElementById('hacker-name'), name = ni.value.trim();
+        if (!name || !user) return;
         try {
             const rankDoc = doc(db, 'artifacts', appId, 'public', 'data', 'rankings', user.uid);
             await setDoc(rankDoc, { name: name, score: Math.floor(score), level: level, uid: user.uid, timestamp: Date.now() });
-            document.getElementById('save-ranking-section').innerHTML = '<p class="text-green-400 font-bold italic">기록이 메인 프레임에 전송되었습니다.</p>';
+            document.getElementById('save-ranking-section').innerHTML = '<p class="text-green-400 font-bold italic text-sm">기록이 메인 프레임에 전송되었습니다.</p>';
         } catch (e) { console.error("저장 실패:", e); }
     }
 
-    // --- UI Events ---
     document.getElementById('start-btn').onclick = () => {
         const guide = `<div class='space-y-3 text-gray-200 text-sm'>
             <p>1. 당신은 세계 최고의 해커가 되기 위해 시스템에 접속하였습니다. 보안 장치를 해독하십시오.</p>
             <p>2. <strong>해커 등급 시스템:</strong> 당신의 실력에 따라 등급이 상승합니다.<br><span class='text-green-400 font-bold'>브론즈 → 실버(Lv.4) → 골드(Lv.7) → 플래티넘(Lv.10) → 다이아(Lv.13) → 마스터(Lv.16) → 챌린저(Lv.19)</span></p>
-            <p>3. 모든 정답은 <strong>정수</strong>입니다. (분수/소수 계수는 나올 수 있습니다)</p>
-            <p>4. level 1에서 3까지는 주어진 방정식의 해가 되는 순서쌍을 찾으면 됩니다. level 4부터는 연립일차방정식이 나오고, 난이도는 점차 올라갑니다.</p>
+            <p>3. 모든 정답은 <strong>정수</strong>입니다.</p>
+            <p>4. level 1에서 3까지는 방정식의 해가 되는 순서쌍을 찾고, level 4부터는 연립방정식을 직접 해독해야 합니다.</p>
             <p>5. 해킹 완료 후 글로벌 랭킹에 본인의 업적을 기록할 수 있습니다.</p>
         </div>`;
         showPopup(guide, () => { score = 0; level = 1; startScreen.classList.add('hidden'); gameScreen.classList.remove('hidden'); generateProblem(); updateUI(); startTimer(); });
