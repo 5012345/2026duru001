@@ -38,7 +38,6 @@
         }
 
         .orbitron { font-family: 'Orbitron', sans-serif; }
-
         .btn-action {
             transition: all 0.2s ease;
             background: #00ff9d;
@@ -59,8 +58,6 @@
             transition: all 0.2s;
         }
 
-        .btn-secondary:hover { background: rgba(0, 255, 157, 0.1); }
-
         .btn-choice {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(0, 255, 157, 0.3);
@@ -74,90 +71,57 @@
             color: #00ff9d;
             border-radius: 8px;
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.25rem;
+            font-size: 1.1rem;
             padding: 12px 0;
             transition: all 0.1s;
+            cursor: pointer;
         }
 
         .keypad-btn:active { background: #00ff9d; color: #050508; transform: scale(0.95); }
         .keypad-btn.op { background: rgba(0, 255, 157, 0.15); color: #fff; }
+        .keypad-btn.skip { background: rgba(255, 196, 0, 0.15); color: #ffc400; border-color: #ffc400; font-size: 0.75rem; line-height: 1.1; }
+
+        /* Anti-AI Obfuscation */
+        .obf { display: inline-block; position: relative; }
+        .obf::after { content: attr(data-val); }
+        .noise { display: none; }
 
         #timer-bar { transition: width 0.1s linear; }
         .hidden { display: none !important; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
-
-        @keyframes fillVertical {
-            from { height: 0%; }
-            to { height: var(--final-height); }
-        }
-        .animate-fill-up {
-            animation: fillVertical 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        .rank-label {
-            position: absolute;
-            right: 110%;
-            transform: translateY(-50%);
-            white-space: nowrap;
-            font-size: 0.7rem;
-            color: #4b5563;
-            transition: color 0.5s;
-        }
-        .rank-label.active { color: #00ff9d; font-weight: bold; }
-
-        #music-control {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 100;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 50%;
-            border: 1px solid #00ff9d;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        #music-control:hover { background: rgba(0, 255, 157, 0.2); }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
     <div class="hacker-bg"></div>
 
-    <!-- BGM Element -->
     <audio id="bgm-audio" loop>
         <source src="bgm.mp3" type="audio/mpeg">
         <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" type="audio/mpeg">
     </audio>
 
-    <!-- Music Toggle Button -->
-    <div id="music-control" onclick="toggleMusic()">
-        <svg id="music-on-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 10 0 0 1 0 7.07"></path></svg>
-        <svg id="music-off-icon" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+    <div id="music-control" onclick="toggleMusic()" style="position: fixed; top: 20px; right: 20px; z-index: 100; background: rgba(0, 0, 0, 0.5); padding: 10px; border-radius: 50%; border: 1px solid #00ff9d; cursor: pointer;">
+        <svg id="music-on-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 10 0 0 1 0 7.07"></path></svg>
+        <svg id="music-off-icon" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
     </div>
 
-    <!-- Instruction Modal -->
     <div id="instruction-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden">
-        <div class="cyber-panel p-8 max-w-lg w-full mx-4 text-center border-yellow-500 shadow-[0_0_40px_rgba(234,179,8,0.2)]">
+        <div class="cyber-panel p-8 max-w-lg w-full mx-4 text-center border-yellow-500">
             <h3 class="orbitron text-yellow-500 text-xl font-bold mb-4 uppercase tracking-widest">Hacking Protocol</h3>
             <div id="modal-text" class="text-white mb-8 text-left space-y-3 text-sm leading-relaxed overflow-y-auto max-h-[60vh] pr-2 scrollbar-hide"></div>
-            <button id="modal-close-btn" class="btn-action w-full py-4 rounded-lg uppercase orbitron bg-yellow-500 hover:bg-yellow-400">데이터 수신 확인</button>
+            <button id="modal-close-btn" class="btn-action w-full py-4 rounded-lg uppercase orbitron">데이터 수신 확인</button>
         </div>
     </div>
 
-    <!-- Ranking Modal -->
     <div id="rank-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden">
-        <div class="cyber-panel p-8 max-w-md w-full mx-4 text-center border-green-500 shadow-[0_0_40px_rgba(0,255,157,0.1)]">
+        <div class="cyber-panel p-8 max-w-md w-full mx-4 text-center border-green-500">
             <h3 class="orbitron text-green-400 text-xl font-bold mb-6 uppercase tracking-widest text-center">Global Rankings</h3>
-            <div id="ranking-list" class="space-y-2 mb-8 text-left max-h-80 overflow-y-auto pr-2 scrollbar-hide">
-                <p class="text-center text-gray-500 italic">랭킹 정보를 동기화 중...</p>
-            </div>
-            <button id="rank-modal-close" class="btn-secondary w-full py-3 rounded-lg uppercase orbitron">시스템 접속 종료</button>
+            <div id="ranking-list" class="space-y-2 mb-8 text-left max-h-80 overflow-y-auto pr-2 scrollbar-hide"></div>
+            <button id="rank-modal-close" class="btn-secondary w-full py-3 rounded-lg uppercase orbitron">닫기</button>
         </div>
     </div>
 
     <div id="game-container" class="w-full max-w-2xl z-10">
-        <!-- Start Screen -->
         <div id="start-screen" class="cyber-panel p-10 text-center">
             <div class="mb-6 flex justify-center">
                 <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
@@ -170,7 +134,6 @@
             </div>
         </div>
 
-        <!-- Main Game Screen -->
         <div id="game-screen" class="hidden cyber-panel p-6">
             <div class="flex justify-between items-center mb-4">
                 <div class="text-left"><p class="text-[10px] uppercase text-gray-500 orbitron">Rank</p><p id="rank-display" class="font-bold text-white text-sm">브론즈 해커</p></div>
@@ -184,7 +147,9 @@
                 <div class="flex justify-between text-[10px] text-gray-500 mt-1 orbitron"><span>SECURE CONNECTION</span><span id="timer-text">120s</span></div>
             </div>
             <div id="problem-area" class="text-center mb-6 py-6 bg-black/50 rounded-xl border border-white/5 relative"><div id="equation-display" class="space-y-2"></div></div>
+            
             <div id="choice-container" class="grid grid-cols-2 gap-3 hidden"></div>
+            
             <div id="input-container" class="hidden">
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div class="relative"><label class="absolute -top-2.5 left-3 bg-[#0a0a14] px-1 text-[9px] text-green-400 orbitron">X_CODE</label><input type="text" id="input-x" readonly class="w-full bg-transparent border border-gray-700 rounded-lg p-3 text-2xl text-center text-white focus:outline-none focus:border-green-400 cursor-pointer" placeholder="?"></div>
@@ -194,13 +159,12 @@
                     <button class="keypad-btn" onclick="handleKey('7')">7</button><button class="keypad-btn" onclick="handleKey('8')">8</button><button class="keypad-btn" onclick="handleKey('9')">9</button><button class="keypad-btn op" onclick="handleKey('del')">⌫</button>
                     <button class="keypad-btn" onclick="handleKey('4')">4</button><button class="keypad-btn" onclick="handleKey('5')">5</button><button class="keypad-btn" onclick="handleKey('6')">6</button><button class="keypad-btn op" onclick="handleKey('-')">-</button>
                     <button class="keypad-btn" onclick="handleKey('1')">1</button><button class="keypad-btn" onclick="handleKey('2')">2</button><button class="keypad-btn" onclick="handleKey('3')">3</button><button class="keypad-btn op" onclick="handleKey('.')">.</button>
-                    <button class="keypad-btn op" onclick="handleKey('/')">/</button><button class="keypad-btn" onclick="handleKey('0')">0</button><button class="keypad-btn op" onclick="handleKey('clear')">C</button><button id="submit-btn" class="keypad-btn bg-green-500 !text-black !font-bold">OK</button>
+                    <button class="keypad-btn op" onclick="handleKey('/')">/</button><button class="keypad-btn" onclick="handleKey('0')">0</button><button class="keypad-btn skip" onclick="handleSkip()">노드<br>재구축</button><button id="submit-btn" class="keypad-btn bg-green-500 !text-black !font-bold">OK</button>
                 </div>
             </div>
             <div id="msg-box" class="text-center h-4 text-xs font-bold opacity-0 transition-opacity"></div>
         </div>
 
-        <!-- Result Screen -->
         <div id="result-screen" class="hidden cyber-panel p-8 text-center overflow-hidden">
             <h2 class="text-2xl font-bold mb-1 orbitron text-red-500">SYSTEM DISCONNECTED</h2>
             <p id="final-rank-text" class="text-xl font-bold text-white mb-6">당신의 계급은 브론즈 해커입니다.</p>
@@ -215,11 +179,8 @@
                 </div>
             </div>
             <div id="save-ranking-section" class="mb-8">
-                <p class="text-xs text-gray-400 mb-2">당신의 명예를 기록하세요 (최대 10자)</p>
-                <div class="flex gap-2 max-w-sm mx-auto">
-                    <input type="text" id="hacker-name" maxlength="10" class="flex-1 bg-black/50 border border-gray-700 rounded p-3 text-white text-center focus:outline-none focus:border-green-400" placeholder="해커 닉네임">
-                    <button id="save-btn" class="btn-action px-6 py-3 rounded text-sm whitespace-nowrap flex-shrink-0">기록 등록</button>
-                </div>
+                <input type="text" id="hacker-name" maxlength="10" class="w-48 bg-black/50 border border-gray-700 rounded p-3 text-white text-center focus:outline-none focus:border-green-400 mr-2" placeholder="해커 닉네임">
+                <button id="save-btn" class="btn-action px-6 py-3 rounded text-sm whitespace-nowrap">기록 등록</button>
             </div>
             <button id="restart-btn" class="btn-secondary w-full py-4 rounded-xl uppercase orbitron text-xl">메인 프레임 재접속</button>
         </div>
@@ -244,17 +205,15 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const appId = 'equation-breaker-final-v7';
+    const appId = 'equation-breaker-v10';
     let user = null;
 
     const bgm = document.getElementById('bgm-audio');
-    const musicOnIcon = document.getElementById('music-on-icon');
-    const musicOffIcon = document.getElementById('music-off-icon');
     let isMusicManualPaused = false; 
 
     window.toggleMusic = () => {
-        if (bgm.paused) { bgm.play().catch(()=>{}); isMusicManualPaused = false; musicOnIcon.classList.remove('hidden'); musicOffIcon.classList.add('hidden'); }
-        else { bgm.pause(); isMusicManualPaused = true; musicOnIcon.classList.add('hidden'); musicOffIcon.classList.remove('hidden'); }
+        if (bgm.paused) { bgm.play().catch(()=>{}); isMusicManualPaused = false; document.getElementById('music-on-icon').classList.remove('hidden'); document.getElementById('music-off-icon').classList.add('hidden'); }
+        else { bgm.pause(); isMusicManualPaused = true; document.getElementById('music-on-icon').classList.add('hidden'); document.getElementById('music-off-icon').classList.remove('hidden'); }
     };
 
     onAuthStateChanged(auth, (u) => { user = u; if(u) fetchRankings(); });
@@ -264,9 +223,8 @@
     const timerBar = document.getElementById('timer-bar'), timerText = document.getElementById('timer-text');
     const equationDisplay = document.getElementById('equation-display'), choiceContainer = document.getElementById('choice-container'), inputContainer = document.getElementById('input-container');
     const instrModal = document.getElementById('instruction-modal'), modalText = document.getElementById('modal-text'), modalCloseBtn = document.getElementById('modal-close-btn');
-    const rankModal = document.getElementById('rank-modal'), rankingList = document.getElementById('ranking-list');
 
-    let score = 0, level = 1, timeLeft = 120, currentMaxTime = 120, timerInterval, currentAnswers = { x: 0, y: 0 }, isPaused = false, focusedInputId = 'input-x', lastProblemKey = "", lastCoeffKey = "";
+    let score = 0, level = 1, timeLeft = 120, currentMaxTime = 120, timerInterval, currentAnswers = { x: 0, y: 0 }, isPaused = false, focusedInputId = 'input-x', lastProblemKey = "";
 
     document.getElementById('input-x').onclick = () => { focusedInputId = 'input-x'; updateInputStyles(); };
     document.getElementById('input-y').onclick = () => { focusedInputId = 'input-y'; updateInputStyles(); };
@@ -282,7 +240,17 @@
         else { if ((key === '.' || key === '/') && input.value.includes(key)) return; input.value += key; }
     };
 
-    // --- Math Utility Functions ---
+    window.handleSkip = () => {
+        if (isPaused) return;
+        showMessage("보안 노드 재구축 중...");
+        actualGenerate();
+    };
+
+    const AI_PROTECT = "\u200B"; // Zero-width space
+    function obfText(text) {
+        return text.split('').join(AI_PROTECT);
+    }
+
     function gcd(a, b) { return b === 0 ? Math.abs(a) : gcd(b, a % b); }
     function cleanNum(n) { return Number(n.toFixed(10)); }
     function toFraction(num) {
@@ -291,10 +259,9 @@
             let n = num * d;
             if (Math.abs(Math.round(n) - n) < 0.0001) {
                 let common = gcd(Math.round(n), d);
-                let numerator = Math.round(n) / common;
-                let denominator = d / common;
-                if (denominator === 1) return numerator.toString();
-                return `${numerator}/${denominator}`;
+                let numr = Math.round(n) / common;
+                let denr = d / common;
+                return denr === 1 ? numr.toString() : `${numr}/${denr}`;
             }
         }
         return cleanNum(num).toString();
@@ -302,12 +269,10 @@
 
     function getNonZeroRand(min, max) { let v; do { v = Math.floor(Math.random() * (max - min + 1)) + min; } while (v === 0); return v; }
 
-    // 계수 1 생략 포맷팅 함수 (핵심 수정 사항)
     function fmtCoeff(coeff, v, first = false) {
         if (coeff === 0) return "";
         let s = coeff > 0 ? (first ? "" : " + ") : (first ? "-" : " - ");
         let val = Math.abs(coeff);
-        // 계수 절대값이 1이면 숫자 생략
         let d = val === 1 ? "" : (Number.isInteger(val) ? val : cleanNum(val));
         return `${s}${d}${v}`;
     }
@@ -315,20 +280,17 @@
     function generateProblem() {
         if (level <= 12) currentMaxTime = 120; else currentMaxTime = Math.max(10, 120 - (level - 12) * 5);
         timeLeft = currentMaxTime;
-        const popups = { 4: '보안 강화. 연립방정식 해를 직접 입력하십시오.', 7: '보안 등급 상승. 다양한 괄호 구조가 출현합니다.', 10: '최고 수준 보안. 정밀한 분수와 소수 계수가 포함됩니다.', 13: '긴급! 시간이 가속됩니다.' };
-        if (popups[level]) showPopup(popups[level], actualGenerate); else actualGenerate();
+        actualGenerate();
     }
 
     function actualGenerate() {
         let x, y, probKey;
         do { 
             const range = 4 + Math.floor(level / 5); 
-            x = getNonZeroRand(-range, range); 
-            y = getNonZeroRand(-range, range); 
+            x = getNonZeroRand(-range, range); y = getNonZeroRand(-range, range); 
             probKey = `${level}_${x}_${y}`; 
         } while (probKey === lastProblemKey);
-        lastProblemKey = probKey; 
-        currentAnswers = { x, y };
+        lastProblemKey = probKey; currentAnswers = { x, y };
 
         if (level <= 3) generateLevel1_3(x, y);
         else if (level <= 6) generateLevelBasicSim(x, y);
@@ -338,20 +300,13 @@
     }
 
     function renderEquation(eq1, eq2 = null) {
-        equationDisplay.innerHTML = `<p class="text-xl md:text-2xl font-bold text-white orbitron animate-fade-in">${eq1}</p>`;
-        if (eq2) equationDisplay.innerHTML += `<p class="text-xl md:text-2xl font-bold text-white orbitron animate-fade-in">${eq2}</p>`;
+        equationDisplay.innerHTML = `<p class="text-xl md:text-2xl font-bold text-white orbitron animate-fade-in">${obfText(eq1)}</p>`;
+        if (eq2) equationDisplay.innerHTML += `<p class="text-xl md:text-2xl font-bold text-white orbitron animate-fade-in">${obfText(eq2)}</p>`;
     }
 
     function generateLevel1_3(ansX, ansY) {
-        let a, b, c, key;
-        do {
-            a = getNonZeroRand(1, 4); b = getNonZeroRand(1, 4);
-            c = (a * ansX + b * ansY);
-            key = `L1_${a}_${b}`;
-        } while (key === lastCoeffKey);
-        lastCoeffKey = key;
-
-        // fmtCoeff 적용하여 1 생략
+        let a = getNonZeroRand(1, 4), b = getNonZeroRand(1, 4);
+        let c = (a * ansX + b * ansY);
         renderEquation(`${fmtCoeff(a, 'x', true)}${fmtCoeff(b, 'y')} = ${c}`);
         choiceContainer.innerHTML = ''; choiceContainer.classList.remove('hidden'); inputContainer.classList.add('hidden');
         const choices = [{x: ansX, y: ansY}];
@@ -369,63 +324,39 @@
     }
 
     function generateLevelBasicSim(ansX, ansY) {
-        let a, b, d, e, key;
+        let a, b, d, e;
         do { 
             a = getNonZeroRand(1, 3); b = getNonZeroRand(-3, 3); 
             d = getNonZeroRand(1, 3); e = getNonZeroRand(-3, 3); 
-            key = `L4_${a}_${b}_${d}_${e}`;
-        } while (a * e === b * d || key === lastCoeffKey);
-        lastCoeffKey = key;
+        } while (a * e === b * d); // Ensure non-parallel lines (Discriminant != 0)
 
-        renderEquation(`${fmtCoeff(a, 'x', true)}${fmtCoeff(b, 'y')} = ${a * ansX + b * ansY}`, `${fmtCoeff(d, 'x', true)}${fmtCoeff(e, 'y')} = ${d * ansX + e * ansY}`);
+        renderEquation(`${fmtCoeff(a, 'x', true)}${fmtCoeff(b, 'y')} = ${a * ansX + b * ansY}`, 
+                       `${fmtCoeff(d, 'x', true)}${fmtCoeff(e, 'y')} = ${d * ansX + e * ansY}`);
         setupInputMode();
     }
 
     function generateLevelParentheses(ansX, ansY) {
-        let a, b, k, key;
-        do {
-            a = getNonZeroRand(2, 3); b = getNonZeroRand(-2, 2); k = getNonZeroRand(-2, 2);
-            key = `L7_${a}_${b}_${k}`;
-        } while (key === lastCoeffKey);
-        lastCoeffKey = key;
-
-        // b가 1인 경우 fmtCoeff가 알아서 처리
+        let a = getNonZeroRand(2, 3), b = getNonZeroRand(-2, 2), k = getNonZeroRand(-2, 2);
         let eq1 = `${a}(x ${k > 0 ? '+' : '-'} ${Math.abs(k)})${fmtCoeff(b, 'y')} = ${a * (ansX + k) + b * ansY}`;
         renderEquation(eq1, `x + y = ${ansX + ansY}`);
         setupInputMode();
     }
 
     function generateLevelComplex(ansX, ansY) {
-        let a, b, den, key;
         const isDec = Math.random() > 0.5;
-        do {
-            if (isDec) {
-                a = getNonZeroRand(1, 5) / 10; b = getNonZeroRand(1, 5) / 10;
-                key = `L10D_${a}_${b}`;
-            } else {
-                den = [2, 5][Math.floor(Math.random() * 2)];
-                key = `L10F_${den}`;
-            }
-        } while (key === lastCoeffKey);
-        lastCoeffKey = key;
-
-        if (isDec) renderEquation(`${fmtCoeff(a, 'x', true)}${fmtCoeff(b, 'y')} = ${cleanNum(a * ansX + b * ansY)}`, `x - y = ${ansX - ansY}`);
-        else renderEquation(`x/${den} + y = ${toFraction(ansX / den + ansY)}`, `x + y = ${ansX + ansY}`);
+        if (isDec) {
+            let a = getNonZeroRand(1, 5) / 10, b = getNonZeroRand(1, 5) / 10;
+            renderEquation(`${fmtCoeff(a, 'x', true)}${fmtCoeff(b, 'y')} = ${cleanNum(a * ansX + b * ansY)}`, `x - y = ${ansX - ansY}`);
+        } else {
+            let den = [2, 5][Math.floor(Math.random() * 2)];
+            renderEquation(`x/${den} + y = ${toFraction(ansX / den + ansY)}`, `x + y = ${ansX + ansY}`);
+        }
         setupInputMode();
     }
 
     function generateLevelExtreme(ansX, ansY) {
-        let a, k, den, key;
-        do {
-            a = [0.1, 0.2, 0.5][Math.floor(Math.random() * 3)]; 
-            k = getNonZeroRand(-2, 2); 
-            den = [2, 3, 4][Math.floor(Math.random() * 3)];
-            key = `L13_${a}_${k}_${den}`;
-        } while (key === lastCoeffKey);
-        lastCoeffKey = key;
-
-        let c1 = a * (ansX + k) + 0.5 * ansY;
-        let c2 = ansX / den + ansY;
+        let a = [0.1, 0.2, 0.5][Math.floor(Math.random() * 3)], k = getNonZeroRand(-2, 2), den = [2, 3, 4][Math.floor(Math.random() * 3)];
+        let c1 = a * (ansX + k) + 0.5 * ansY, c2 = ansX / den + ansY;
         renderEquation(`${cleanNum(a)}(x ${k >= 0 ? '+' : '-'} ${Math.abs(k)}) + 0.5y = ${toFraction(c1)}`, `x/${den} + y = ${toFraction(c2)}`);
         setupInputMode();
     }
@@ -438,8 +369,8 @@
 
     function checkAnswer(xi, yi) {
         if (isPaused) return;
-        const parseVal = (v) => { if(v.includes('/')) { let p = v.split('/'); return parseFloat(p[0])/parseFloat(p[1]); } return parseFloat(v); };
-        const xv = parseVal(xi.toString()), yv = parseVal(yi.toString());
+        const parseVal = (v) => { if(typeof v !== 'string') v = v.toString(); if(v.includes('/')) { let p = v.split('/'); return parseFloat(p[0])/parseFloat(p[1]); } return parseFloat(v); };
+        const xv = parseVal(xi), yv = parseVal(yi);
         if (isNaN(xv) || isNaN(yv)) return;
         if (Math.abs(xv - currentAnswers.x) < 0.01 && Math.abs(yv - currentAnswers.y) < 0.01) {
             score += 100 + (timeLeft * 5); level += 1; generateProblem(); updateUI();
@@ -477,16 +408,18 @@
         const rn = getRankName(level);
         document.getElementById('final-rank-text').innerText = `당신의 계급은 ${rn} 해커입니다.`;
         const ph = Math.min(100, Math.max(5, (level / 20) * 100));
-        const gb = document.getElementById('gauge-bar');
-        gb.style.height = `${ph}%`;
-        const labels = document.querySelectorAll('.rank-label');
-        const map = {"챌린저": "challenger", "마스터": "master", "다이아": "diamond", "플레티넘": "platinum", "골드": "gold", "실버": "silver", "브론즈": "bronze"};
-        labels.forEach(l => { if(l.innerText.toLowerCase() === map[rn]) l.classList.add('active'); else l.classList.remove('active'); });
+        document.getElementById('gauge-bar').style.height = `${ph}%`;
     };
 
     function showPopup(html, callback) {
         isPaused = true; modalText.innerHTML = html; instrModal.classList.remove('hidden');
         modalCloseBtn.onclick = () => { if (!isMusicManualPaused) bgm.play().catch(()=>{}); instrModal.classList.add('hidden'); isPaused = false; if (callback) callback(); };
+    }
+
+    function showMessage(text) {
+        const msg = document.getElementById('msg-box');
+        msg.innerText = text; msg.style.opacity = "1";
+        setTimeout(() => msg.style.opacity = "0", 2000);
     }
 
     async function fetchRankings() {
@@ -496,27 +429,26 @@
             onSnapshot(query(rankRef), (snapshot) => {
                 const data = []; snapshot.forEach(doc => data.push(doc.data()));
                 data.sort((a, b) => b.score - a.score);
-                rankingList.innerHTML = '';
-                if(data.length === 0) { rankingList.innerHTML = '<p class="text-center text-gray-500 italic">랭킹이 비어있습니다.</p>'; return; }
+                const list = document.getElementById('ranking-list');
+                list.innerHTML = '';
                 data.slice(0, 10).forEach((entry, idx) => {
                     const row = document.createElement('div');
                     row.className = `flex justify-between items-center p-2 rounded bg-white/5 border border-white/10`;
                     row.innerHTML = `<span class="orbitron text-gray-500 w-6">${idx+1}</span><span class="flex-1 ml-2 font-bold truncate">${entry.name}</span><span class="text-green-400 font-bold ml-2">Lv.${entry.level} | ${entry.score}</span>`;
-                    rankingList.appendChild(row);
+                    list.appendChild(row);
                 });
             });
-        } catch (e) { console.error("Ranking fetch failed:", e); }
+        } catch (e) {}
     }
 
-    async function saveScore() {
+    document.getElementById('save-btn').onclick = async () => {
         const ni = document.getElementById('hacker-name'), name = ni.value.trim();
         if (!name || !user) return;
         try {
-            const rankDoc = doc(db, 'artifacts', appId, 'public', 'data', 'rankings', user.uid);
-            await setDoc(rankDoc, { name: name, score: Math.floor(score), level: level, uid: user.uid, timestamp: Date.now() });
-            document.getElementById('save-ranking-section').innerHTML = '<p class="text-green-400 font-bold italic text-sm">기록이 메인 프레임에 전송되었습니다.</p>';
-        } catch (e) { console.error("저장 실패:", e); }
-    }
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rankings', user.uid), { name: name, score: Math.floor(score), level: level, uid: user.uid, timestamp: Date.now() });
+            document.getElementById('save-ranking-section').innerHTML = '<p class="text-green-400 font-bold italic text-sm">데이터 전송 완료</p>';
+        } catch (e) {}
+    };
 
     document.getElementById('start-btn').onclick = () => {
         const guide = `<div class='space-y-3 text-gray-200 text-sm'>
@@ -524,14 +456,13 @@
             <p>2. <strong>해커 등급 시스템:</strong> 당신의 실력에 따라 등급이 상승합니다.<br><span class='text-green-400 font-bold'>브론즈 → 실버(Lv.4) → 골드(Lv.7) → 플래티넘(Lv.10) → 다이아(Lv.13) → 마스터(Lv.16) → 챌린저(Lv.19)</span></p>
             <p>3. 모든 정답은 <strong>정수</strong>입니다.</p>
             <p>4. level 1에서 3까지는 방정식의 해가 되는 순서쌍을 찾고, level 4부터는 연립방정식을 직접 해독해야 합니다.</p>
-            <p>5. 해킹 완료 후 글로벌 랭킹에 본인의 업적을 기록할 수 있습니다.</p>
+            <p>5. <strong>노드 재구축:</strong> 문제에 오류가 의심되거나 풀기 어렵다면 버튼을 누르십시오. 시간 페널티 없이 문제가 교체됩니다.</p>
         </div>`;
         showPopup(guide, () => { score = 0; level = 1; startScreen.classList.add('hidden'); gameScreen.classList.remove('hidden'); generateProblem(); updateUI(); startTimer(); });
     };
-    document.getElementById('view-rank-btn').onclick = () => { rankModal.classList.remove('hidden'); fetchRankings(); };
-    document.getElementById('rank-modal-close').onclick = () => rankModal.classList.add('hidden');
-    document.getElementById('submit-btn').onclick = () => { const ix = document.getElementById('input-x'), iy = document.getElementById('input-y'); checkAnswer(ix.value, iy.value); };
-    document.getElementById('save-btn').onclick = saveScore;
+    document.getElementById('view-rank-btn').onclick = () => document.getElementById('rank-modal').classList.remove('hidden');
+    document.getElementById('rank-modal-close').onclick = () => document.getElementById('rank-modal').classList.add('hidden');
+    document.getElementById('submit-btn').onclick = () => { checkAnswer(document.getElementById('input-x').value, document.getElementById('input-y').value); };
     document.getElementById('restart-btn').onclick = () => location.reload();
 </script>
 </body>
