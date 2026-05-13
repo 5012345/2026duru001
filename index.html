@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CODE BREAKER - ANTI-AI EDITION</title>
+    <title>방정식 코드 브레이커 - 글로벌 랭킹</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+KR:wght@300;500;700&display=swap');
@@ -14,22 +14,25 @@
             color: #00ff9d;
             margin: 0;
             overflow-x: hidden;
-            
-            /* 1. 부정행위 방지 CSS: 텍스트 선택 및 드래그 금지 */
+            /* 1. 부정행위 방지: 선택 및 드래그 금지 */
+            user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
-            user-select: none;
-            
-            /* 1. 부정행위 방지 CSS: 모바일 길게 누르기 메뉴 비활성화 */
             -webkit-touch-callout: none;
         }
 
         .hacker-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.9)), 
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), 
                         url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=2070');
-            background-size: cover; background-position: center; z-index: -1;
+            background-size: cover;
+            background-position: center;
+            z-index: -1;
         }
 
         .cyber-panel {
@@ -42,52 +45,93 @@
 
         .orbitron { font-family: 'Orbitron', sans-serif; }
 
-        /* ANTI-AI CSS Obfuscation */
-        .obf-container { display: inline-flex; flex-wrap: wrap; justify-content: center; }
-        .obf-char { position: relative; display: inline-block; min-width: 0.5em; }
-        .obf-char::after { content: attr(data-v); position: relative; }
-        .noise { position: absolute; opacity: 0.01; font-size: 1px; pointer-events: none; }
+        /* Anti-AI Obfuscation Rendering */
+        .obf-char::after {
+            content: attr(data-val);
+        }
 
         .btn-action {
             transition: all 0.2s ease;
-            background: #00ff9d; color: #050508; font-weight: bold;
+            background: #00ff9d;
+            color: #050508;
+            font-weight: bold;
         }
 
         .btn-action:hover {
-            background: #05d684; transform: translateY(-2px);
+            background: #05d684;
+            transform: translateY(-2px);
             box-shadow: 0 5px 20px rgba(0, 255, 157, 0.4);
         }
 
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.05); border: 1px solid #00ff9d; color: #00ff9d;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #00ff9d;
+            color: #00ff9d;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover { background: rgba(0, 255, 157, 0.1); }
+
+        .btn-choice {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 157, 0.3);
+            color: white;
+            transition: all 0.2s;
         }
 
         .keypad-btn {
-            background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(0, 255, 157, 0.2);
-            color: #00ff9d; border-radius: 8px; font-family: 'Orbitron', sans-serif;
-            font-size: 1.1rem; padding: 12px 0; cursor: pointer;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(0, 255, 157, 0.2);
+            color: #00ff9d;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.25rem;
+            padding: 12px 0;
+            transition: all 0.1s;
         }
+
         .keypad-btn:active { background: #00ff9d; color: #050508; transform: scale(0.95); }
         .keypad-btn.op { background: rgba(0, 255, 157, 0.15); color: #fff; }
-        .keypad-btn.skip { background: rgba(255, 196, 0, 0.1); color: #ffc400; border-color: #ffc400; font-size: 0.75rem; line-height: 1.1; }
 
         #timer-bar { transition: width 0.1s linear; }
         .hidden { display: none !important; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-        @keyframes fillVertical { from { height: 0%; } to { height: var(--final-height); } }
-        .animate-fill-up { animation: fillVertical 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        
-        .rank-label { position: absolute; right: 110%; transform: translateY(-50%); font-size: 0.7rem; color: #4b5563; }
-        .rank-label.active { color: #00ff9d; font-weight: bold; }
-        
-        /* Cheat Alert Modal Styling */
-        #cheat-modal {
-            border-color: #ff4d4d !important;
-            box-shadow: 0 0 40px rgba(255, 77, 77, 0.4) !important;
+        @keyframes fillVertical {
+            from { height: 0%; }
+            to { height: var(--final-height); }
         }
+        .animate-fill-up {
+            animation: fillVertical 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .rank-label {
+            position: absolute;
+            right: 110%;
+            transform: translateY(-50%);
+            white-space: nowrap;
+            font-size: 0.7rem;
+            color: #4b5563;
+            transition: color 0.5s;
+        }
+        .rank-label.active { color: #00ff9d; font-weight: bold; }
+
+        #music-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 50%;
+            border: 1px solid #00ff9d;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #music-control:hover { background: rgba(0, 255, 157, 0.2); }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-4" oncontextmenu="return false">
 
     <div class="hacker-bg"></div>
 
@@ -96,32 +140,28 @@
         <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" type="audio/mpeg">
     </audio>
 
-    <div id="music-control" onclick="toggleMusic()" style="position: fixed; top: 20px; right: 20px; z-index: 100; background: rgba(0, 0, 0, 0.5); padding: 10px; border-radius: 50%; border: 1px solid #00ff9d; cursor: pointer;">
-        <svg id="music-on-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 10 0 0 1 0 7.07"></path></svg>
-        <svg id="music-off-icon" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+    <div id="music-control">
+        <svg id="music-on-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 10 0 0 1 0 7.07"></path></svg>
+        <svg id="music-off-icon" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
     </div>
 
     <!-- Instruction Modal -->
     <div id="instruction-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden">
-        <div class="cyber-panel p-8 max-w-lg w-full mx-4 text-center border-yellow-500">
-            <h3 class="orbitron text-yellow-500 text-xl font-bold mb-4">HACKING PROTOCOL</h3>
-            <div id="modal-text" class="text-white mb-8 text-left space-y-3 text-sm leading-relaxed overflow-y-auto max-h-[60vh] scrollbar-hide"></div>
-            <button id="modal-close-btn" class="btn-action w-full py-4 rounded-lg orbitron">접속 승인</button>
+        <div class="cyber-panel p-8 max-w-lg w-full mx-4 text-center border-yellow-500 shadow-[0_0_40px_rgba(234,179,8,0.2)]">
+            <h3 class="orbitron text-yellow-500 text-xl font-bold mb-4 uppercase tracking-widest">Hacking Protocol</h3>
+            <div id="modal-text" class="text-white mb-8 text-left space-y-3 text-sm leading-relaxed overflow-y-auto max-h-[60vh] pr-2 scrollbar-hide"></div>
+            <button id="modal-close-btn" class="btn-action w-full py-4 rounded-lg uppercase orbitron bg-yellow-500 hover:bg-yellow-400">데이터 수신 확인</button>
         </div>
     </div>
 
-    <!-- 부정행위 감지 모달 -->
-    <div id="cheat-warning-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 hidden">
-        <div id="cheat-modal" class="cyber-panel p-8 max-w-md w-full mx-4 text-center border-red-500">
-            <div class="mb-4 flex justify-center text-red-500">
-                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <!-- Ranking Modal -->
+    <div id="rank-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden">
+        <div class="cyber-panel p-8 max-w-md w-full mx-4 text-center border-green-500 shadow-[0_0_40px_rgba(0,255,157,0.1)]">
+            <h3 class="orbitron text-green-400 text-xl font-bold mb-6 uppercase tracking-widest text-center">Global Rankings</h3>
+            <div id="ranking-list" class="space-y-2 mb-8 text-left max-h-80 overflow-y-auto pr-2 scrollbar-hide">
+                <p class="text-center text-gray-500 italic">랭킹 정보를 동기화 중...</p>
             </div>
-            <h3 class="orbitron text-red-500 text-xl font-bold mb-4 uppercase">Security Breach Detected</h3>
-            <p class="text-white mb-8 text-sm leading-relaxed">
-                외부 기능 사용 또는 화면 이탈이 감지되었습니다.<br>
-                정직하게 문제를 풀어주세요!
-            </p>
-            <button id="cheat-close-btn" class="btn-action w-full py-4 rounded-lg orbitron !bg-red-500 !text-white">확인했습니다</button>
+            <button id="rank-modal-close" class="btn-secondary w-full py-3 rounded-lg uppercase orbitron">시스템 접속 종료</button>
         </div>
     </div>
 
@@ -134,8 +174,8 @@
             <h1 class="text-5xl font-bold mb-4 orbitron text-white">CODE BREAKER</h1>
             <p class="text-xl text-green-400 mb-8 font-medium">연립방정식 보안 시스템 해킹</p>
             <div class="flex flex-col gap-4 max-w-sm mx-auto">
-                <button id="start-btn" class="btn-action px-10 py-5 rounded-full text-xl orbitron">시스템 접속</button>
-                <button id="view-rank-btn" class="btn-secondary px-10 py-3 rounded-full text-lg orbitron">글로벌 랭킹</button>
+                <button id="start-btn" class="btn-action px-10 py-5 rounded-full text-xl uppercase orbitron">시스템 접속 시작</button>
+                <button id="view-rank-btn" class="btn-secondary px-10 py-3 rounded-full text-lg uppercase orbitron">글로벌 랭킹 확인</button>
             </div>
         </div>
 
@@ -152,27 +192,21 @@
                 </div>
                 <div class="flex justify-between text-[10px] text-gray-500 mt-1 orbitron"><span>SECURE CONNECTION</span><span id="timer-text">120s</span></div>
             </div>
-
-            <!-- Problem Area with Obfuscation -->
-            <div id="problem-area" class="text-center mb-6 py-6 bg-black/50 rounded-xl border border-white/5 relative">
-                <div id="equation-display" class="space-y-4"></div>
-            </div>
-
+            <div id="problem-area" class="text-center mb-6 py-6 bg-black/50 rounded-xl border border-white/5 relative"><div id="equation-display" class="space-y-2"></div></div>
             <div id="choice-container" class="grid grid-cols-2 gap-3 hidden"></div>
-
             <div id="input-container" class="hidden">
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div class="relative"><label class="absolute -top-2.5 left-3 bg-[#0a0a14] px-1 text-[9px] text-green-400 orbitron">X_CODE</label><input type="text" id="input-x" readonly class="w-full bg-transparent border border-gray-700 rounded-lg p-3 text-2xl text-center text-white focus:outline-none focus:border-green-400 cursor-pointer" placeholder="?"></div>
                     <div class="relative"><label class="absolute -top-2.5 left-3 bg-[#0a0a14] px-1 text-[9px] text-green-400 orbitron">Y_CODE</label><input type="text" id="input-y" readonly class="w-full bg-transparent border border-gray-700 rounded-lg p-3 text-2xl text-center text-white focus:outline-none focus:border-green-400 cursor-pointer" placeholder="?"></div>
                 </div>
-                <div id="hacker-keypad" class="grid grid-cols-4 gap-2 mb-4">
-                    <button class="keypad-btn" onclick="handleKey('7')">7</button><button class="keypad-btn" onclick="handleKey('8')">8</button><button class="keypad-btn" onclick="handleKey('9')">9</button><button class="keypad-btn op" onclick="handleKey('del')">⌫</button>
-                    <button class="keypad-btn" onclick="handleKey('4')">4</button><button class="keypad-btn" onclick="handleKey('5')">5</button><button class="keypad-btn" onclick="handleKey('6')">6</button><button class="keypad-btn op" onclick="handleKey('-')">-</button>
-                    <button class="keypad-btn" onclick="handleKey('1')">1</button><button class="keypad-btn" onclick="handleKey('2')">2</button><button class="keypad-btn" onclick="handleKey('3')">3</button><button class="keypad-btn op" onclick="handleKey('.')">.</button>
-                    <button class="keypad-btn op" onclick="handleKey('/')">/</button><button class="keypad-btn" onclick="handleKey('0')">0</button>
-                    <button class="keypad-btn skip" onclick="handleSkip()">노드<br>재구축</button>
-                    <button id="submit-btn" class="keypad-btn bg-green-500 !text-black !font-bold">OK</button>
+                <div id="hacker-keypad" class="grid grid-cols-4 gap-2 mb-2">
+                    <button class="keypad-btn" data-key="7">7</button><button class="keypad-btn" data-key="8">8</button><button class="keypad-btn" data-key="9">9</button><button class="keypad-btn op" data-key="del">⌫</button>
+                    <button class="keypad-btn" data-key="4">4</button><button class="keypad-btn" data-key="5">5</button><button class="keypad-btn" data-key="6">6</button><button class="keypad-btn op" data-key="-">-</button>
+                    <button class="keypad-btn" data-key="1">1</button><button class="keypad-btn" data-key="2">2</button><button class="keypad-btn" data-key="3">3</button><button class="keypad-btn op" data-key=".">.</button>
+                    <button class="keypad-btn op" data-key="/">/</button><button class="keypad-btn" data-key="0">0</button><button class="keypad-btn op" data-key="clear">C</button><button id="submit-btn" class="keypad-btn bg-green-500 !text-black !font-bold">OK</button>
                 </div>
+                <!-- 1. 노드 재구축 버튼 복구 -->
+                <button id="rebuild-btn" class="keypad-btn op w-full !text-xs py-2 uppercase orbitron border-red-500/50 text-red-400 hover:bg-red-500/10">데이터 노드 재구축 (오류 패스)</button>
             </div>
             <div id="msg-box" class="text-center h-4 text-xs font-bold opacity-0 transition-opacity"></div>
         </div>
@@ -192,21 +226,22 @@
                 </div>
             </div>
             <div id="save-ranking-section" class="mb-8">
+                <p class="text-xs text-gray-400 mb-2">당신의 명예를 기록하세요 (최대 10자)</p>
                 <div class="flex gap-2 max-w-sm mx-auto">
                     <input type="text" id="hacker-name" maxlength="10" class="flex-1 bg-black/50 border border-gray-700 rounded p-3 text-white text-center focus:outline-none focus:border-green-400" placeholder="해커 닉네임">
-                    <button id="save-btn" class="btn-action px-6 py-3 rounded text-sm whitespace-nowrap">기록 등록</button>
+                    <button id="save-btn" class="btn-action px-6 py-3 rounded text-sm whitespace-nowrap flex-shrink-0">기록 등록</button>
                 </div>
             </div>
-            <button id="restart-btn" class="btn-secondary w-full py-4 rounded-xl orbitron text-xl">메인 프레임 재접속</button>
+            <button id="restart-btn" class="btn-secondary w-full py-4 rounded-xl uppercase orbitron text-xl">메인 프레임 재접속</button>
         </div>
     </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, query, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-    // Firebase Config (기존 설정 유지)
     const firebaseConfig = {
         apiKey: "AIzaSyDMcRf_D4ajjJWxaHS98-fX-CWHJCBHDAk",
         authDomain: "duru001-b5129.firebaseapp.com",
@@ -219,93 +254,107 @@
     };
 
     const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const appId = 'equation-breaker-v10';
     let user = null;
 
     const bgm = document.getElementById('bgm-audio');
+    const musicOnIcon = document.getElementById('music-on-icon');
+    const musicOffIcon = document.getElementById('music-off-icon');
     let isMusicManualPaused = false; 
 
+    // Global Functions for UI
     window.toggleMusic = () => {
-        if (bgm.paused) { bgm.play().catch(()=>{}); isMusicManualPaused = false; document.getElementById('music-on-icon').classList.add('hidden'); document.getElementById('music-off-icon').classList.remove('hidden'); }
-        else { bgm.pause(); isMusicManualPaused = true; document.getElementById('music-on-icon').classList.remove('hidden'); document.getElementById('music-off-icon').classList.add('hidden'); }
-        updateMusicIcons();
+        if (bgm.paused) { bgm.play().catch(()=>{}); isMusicManualPaused = false; musicOnIcon.classList.remove('hidden'); musicOffIcon.classList.add('hidden'); }
+        else { bgm.pause(); isMusicManualPaused = true; musicOnIcon.classList.add('hidden'); musicOffIcon.classList.remove('hidden'); }
     };
 
-    function updateMusicIcons() {
-        if(bgm.paused) { document.getElementById('music-on-icon').classList.add('hidden'); document.getElementById('music-off-icon').classList.remove('hidden'); }
-        else { document.getElementById('music-on-icon').classList.remove('hidden'); document.getElementById('music-off-icon').classList.add('hidden'); }
-    }
-
-    onAuthStateChanged(auth, (u) => { user = u; });
+    onAuthStateChanged(auth, (u) => { 
+        user = u; 
+        if(u) fetchRankings(); 
+    });
     signInAnonymously(auth);
 
-    // --- STREAMING_CHUNK:Defining Game State Variables... ---
-    let score = 0, level = 1, timeLeft = 120, currentMaxTime = 120, timerInterval;
-    let currentAnswers = { x: 0, y: 0 }, isPaused = false, focusedInputId = 'input-x', lastProblemKey = "";
+    const startScreen = document.getElementById('start-screen'), gameScreen = document.getElementById('game-screen'), resultScreen = document.getElementById('result-screen');
+    const timerBar = document.getElementById('timer-bar'), timerText = document.getElementById('timer-text');
+    const equationDisplay = document.getElementById('equation-display'), choiceContainer = document.getElementById('choice-container'), inputContainer = document.getElementById('input-container');
+    const instrModal = document.getElementById('instruction-modal'), modalText = document.getElementById('modal-text'), modalCloseBtn = document.getElementById('modal-close-btn');
+    const rankModal = document.getElementById('rank-modal'), rankingList = document.getElementById('ranking-list');
 
-    const equationDisplay = document.getElementById('equation-display');
-    const choiceContainer = document.getElementById('choice-container');
-    const inputContainer = document.getElementById('input-container');
+    let score = 0, level = 1, timeLeft = 120, currentMaxTime = 120, timerInterval, currentAnswers = { x: 0, y: 0 }, isPaused = false, focusedInputId = 'input-x', lastProblemKey = "", lastCoeffKey = "";
 
-    // --- STREAMING_CHUNK:Handling Anti-Cheat Logic... ---
-    // 2. JavaScript 이탈 감지 (Visibility API)
-    const cheatModal = document.getElementById('cheat-warning-modal');
-    const cheatCloseBtn = document.getElementById('cheat-close-btn');
+    // 2. 숫자판 및 상호작용 활성화 (Window 바인딩으로 스코프 문제 해결)
+    window.handleKey = (key) => {
+        if (isPaused) return;
+        const input = document.getElementById(focusedInputId);
+        if (key === 'del') input.value = input.value.slice(0, -1);
+        else if (key === 'clear') input.value = '';
+        else { if ((key === '.' || key === '/') && input.value.includes(key)) return; input.value += key; }
+    };
+
+    document.querySelectorAll('.keypad-btn[data-key]').forEach(btn => {
+        btn.addEventListener('click', () => window.handleKey(btn.getAttribute('data-key')));
+    });
+
+    document.getElementById('rebuild-btn').onclick = () => {
+        if (isPaused) return;
+        showMessage("데이터 노드 재구축 중...");
+        actualGenerate();
+    };
 
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            // 브라우저 탭이 바뀌거나 오버레이(서클 투 서치 등)가 실행되면 발생
-            isPaused = true; // 게임 타이머 일시정지
-            cheatModal.classList.remove('hidden');
+        if (document.hidden && !gameScreen.classList.contains('hidden')) {
+            showPopup("<div class='text-center py-4'><svg class='mx-auto mb-4 text-red-500' width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/><line x1='12' y1='9' x2='12' y2='13'/><line x1='12' y1='17' x2='12.01' y2='17'/></svg><p class='text-lg font-bold text-red-500 mb-2'>SECURITY BREACH</p><p>외부 기능 사용 또는 화면 이탈이 감지되었습니다.<br>정직하게 문제를 풀어주세요!</p></div>", null);
         }
     });
 
-    cheatCloseBtn.onclick = () => {
-        cheatModal.classList.add('hidden');
-        isPaused = false; // 게임 재개
-    };
-
-    // 추가 보안: 우클릭 방지
-    document.addEventListener('contextmenu', (e) => e.preventDefault());
-
-    // --- STREAMING_CHUNK:Defining Anti-AI Encryption Logic... ---
-    function obfText(text) {
-        const container = document.createElement('div');
-        container.className = 'obf-container';
-        text.split('').forEach(char => {
-            const span = document.createElement('span');
-            span.className = 'obf-char';
-            span.setAttribute('data-v', char);
-            const noise = document.createElement('span');
-            noise.className = 'noise';
-            noise.innerText = Math.random().toString(36).substring(7);
-            container.appendChild(span);
-            container.appendChild(noise);
-        });
-        return container.outerHTML;
+    document.getElementById('input-x').onclick = () => { focusedInputId = 'input-x'; updateInputStyles(); };
+    document.getElementById('input-y').onclick = () => { focusedInputId = 'input-y'; updateInputStyles(); };
+    function updateInputStyles() {
+        document.getElementById('input-x').style.borderColor = focusedInputId === 'input-x' ? '#00ff9d' : '#374151';
+        document.getElementById('input-y').style.borderColor = focusedInputId === 'input-y' ? '#00ff9d' : '#374151';
     }
 
-    // --- STREAMING_CHUNK:Math Problem Generator Core... ---
+    function gcd(a, b) { return b === 0 ? Math.abs(a) : gcd(b, a % b); }
+    function cleanNum(n) { return Number(n.toFixed(10)); }
+    function toFraction(num) {
+        if (Number.isInteger(num)) return num.toString();
+        for (let d = 1; d <= 10; d++) {
+            let n = num * d;
+            if (Math.abs(Math.round(n) - n) < 0.0001) {
+                let common = gcd(Math.round(n), d);
+                let numerator = Math.round(n) / common;
+                let denominator = d / common;
+                if (denominator === 1) return numerator.toString();
+                return `${numerator}/${denominator}`;
+            }
+        }
+        return cleanNum(num).toString();
+    }
     function getNonZeroRand(min, max) { let v; do { v = Math.floor(Math.random() * (max - min + 1)) + min; } while (v === 0); return v; }
+
+    function obf(str) {
+        return str.split('').map(char => `<span class="obf-char" data-val="${char}"></span>`).join('\u200B');
+    }
 
     function generateProblem() {
         if (level <= 12) currentMaxTime = 120; else currentMaxTime = Math.max(10, 120 - (level - 12) * 5);
         timeLeft = currentMaxTime;
-        actualGenerate();
+        const popups = { 
+            4: '보안 강화. 연립방정식 해를 직접 입력하십시오.', 
+            7: '보안 등급 상승. 다양한 괄호 구조가 출현합니다.', 
+            10: '최고 수준 보안. 정밀한 분수와 소수 계수가 포함됩니다.', 
+            13: '긴급! 시간이 가속됩니다.' 
+        };
+        if (popups[level]) showPopup(popups[level], actualGenerate); else actualGenerate();
     }
 
     function actualGenerate() {
         let x, y, probKey;
-        do { 
-            const range = 4 + Math.floor(level / 5); 
-            x = getNonZeroRand(-range, range); y = getNonZeroRand(-range, range); 
-            probKey = `${level}_${x}_${y}`; 
-        } while (probKey === lastProblemKey);
+        do { const range = 4 + Math.floor(level / 5); x = getNonZeroRand(-range, range); y = getNonZeroRand(-range, range); probKey = `${level}_${x}_${y}`; } while (probKey === lastProblemKey);
         lastProblemKey = probKey; currentAnswers = { x, y };
-
-        equationDisplay.innerHTML = '';
         if (level <= 3) generateLevel1_3(x, y);
         else if (level <= 6) generateLevelBasicSim(x, y);
         else if (level <= 9) generateLevelParentheses(x, y);
@@ -313,39 +362,33 @@
         else generateLevelExtreme(x, y);
     }
 
-    function renderEquation(eq1, eq2 = null) {
-        equationDisplay.innerHTML = obfText(eq1);
-        if (eq2) {
-            const br = document.createElement('div'); br.className = 'h-2';
-            equationDisplay.appendChild(br);
-            const eq2Node = document.createElement('div');
-            eq2Node.innerHTML = obfText(eq2);
-            equationDisplay.appendChild(eq2Node);
-        }
-    }
-
     function fmtCoeff(coeff, v, first = false) {
         if (coeff === 0) return "";
         let s = coeff > 0 ? (first ? "" : " + ") : (first ? "-" : " - ");
         let val = Math.abs(coeff);
-        let d = val === 1 ? "" : (Number.isInteger(val) ? val : Number(val.toFixed(1)));
+        let d = val === 1 ? "" : (Number.isInteger(val) ? val : cleanNum(val));
         return `${s}${d}${v}`;
     }
 
-    // --- STREAMING_CHUNK:Level Generators... ---
+    function renderEquation(eq1, eq2 = null) {
+        equationDisplay.innerHTML = `<p class="text-xl md:text-2xl font-bold text-white orbitron animate-fade-in">${obf(eq1)}</p>`;
+        if (eq2) equationDisplay.innerHTML += `<p class="text-xl md:text-2xl font-bold text-white orbitron animate-fade-in">${obf(eq2)}</p>`;
+    }
+
     function generateLevel1_3(ansX, ansY) {
-        let a = getNonZeroRand(1, 4), b = getNonZeroRand(1, 4);
-        let c = (a * ansX + b * ansY);
+        let a, b, c, key;
+        do { a = getNonZeroRand(1, 4); b = getNonZeroRand(1, 4); c = (a * ansX + b * ansY); key = `L1_${a}_${b}`; } while (key === lastCoeffKey);
+        lastCoeffKey = key;
         renderEquation(`${fmtCoeff(a, 'x', true)}${fmtCoeff(b, 'y')} = ${c}`);
         choiceContainer.innerHTML = ''; choiceContainer.classList.remove('hidden'); inputContainer.classList.add('hidden');
         const choices = [{x: ansX, y: ansY}];
         while (choices.length < 4) {
             const rx = ansX + getNonZeroRand(-3, 3), ry = ansY + getNonZeroRand(-3, 3);
-            if (!choices.some(ch => ch.x === rx && ch.y === ry)) choices.push({x: rx, y: ry});
+            if (!choices.some(ch => ch.x === rx && ch.y === ry) && (a * rx + b * ry !== c)) choices.push({x: rx, y: ry});
         }
         choices.sort(() => Math.random() - 0.5).forEach(ch => {
             const btn = document.createElement('button');
-            btn.className = 'keypad-btn py-3 rounded-lg orbitron text-sm font-bold';
+            btn.className = 'btn-choice py-3 rounded-lg orbitron text-sm font-bold';
             btn.innerText = `(${ch.x}, ${ch.y})`;
             btn.onclick = () => checkAnswer(ch.x, ch.y);
             choiceContainer.appendChild(btn);
@@ -353,29 +396,36 @@
     }
 
     function generateLevelBasicSim(ansX, ansY) {
-        let a, b, d, e;
-        do { a = getNonZeroRand(1, 3); b = getNonZeroRand(-3, 3); d = getNonZeroRand(1, 3); e = getNonZeroRand(-3, 3); } while (a * e === b * d);
-        renderEquation(`${fmtCoeff(a, 'x', true)}${fmtCoeff(b, 'y')} = ${a * ansX + b * ansY}`, 
-                       `${fmtCoeff(d, 'x', true)}${fmtCoeff(e, 'y')} = ${d * ansX + e * ansY}`);
+        let a, b, d, e, key;
+        do { a = getNonZeroRand(1, 3); b = getNonZeroRand(-3, 3); d = getNonZeroRand(1, 3); e = getNonZeroRand(-3, 3); key = `L4_${a}_${b}_${d}_${e}`; } while (a * e === b * d || key === lastCoeffKey);
+        lastCoeffKey = key;
+        renderEquation(`${fmtCoeff(a, 'x', true)}${fmtCoeff(b, 'y')} = ${a * ansX + b * ansY}`, `${fmtCoeff(d, 'x', true)}${fmtCoeff(e, 'y')} = ${d * ansX + e * ansY}`);
         setupInputMode();
     }
 
     function generateLevelParentheses(ansX, ansY) {
-        let a = getNonZeroRand(2, 3), k = getNonZeroRand(-2, 2);
-        let eq1 = `${a}(x ${k > 0 ? '+' : '-'} ${Math.abs(k)}) + y = ${a * (ansX + k) + ansY}`;
-        renderEquation(eq1, `x - y = ${ansX - ansY}`);
+        let a, b, k, key;
+        do { a = getNonZeroRand(2, 3); b = getNonZeroRand(-2, 2); k = getNonZeroRand(-2, 2); key = `L7_${a}_${b}_${k}`; } while (key === lastCoeffKey);
+        lastCoeffKey = key;
+        let eq1 = `${a}(x ${k > 0 ? '+' : '-'} ${Math.abs(k)})${fmtCoeff(b, 'y')} = ${a * (ansX + k) + b * ansY}`;
+        renderEquation(eq1, `x + y = ${ansX + ansY}`);
         setupInputMode();
     }
 
     function generateLevelComplex(ansX, ansY) {
-        let den = [2, 5][Math.floor(Math.random() * 2)];
-        renderEquation(`x/${den} + y = ${Number((ansX / den + ansY).toFixed(2))}`, `x + y = ${ansX + ansY}`);
+        let a, b, den, key; const isDec = Math.random() > 0.5;
+        do { if (isDec) { a = getNonZeroRand(1, 5) / 10; b = getNonZeroRand(1, 5) / 10; key = `L10D_${a}_${b}`; } else { den = [2, 5][Math.floor(Math.random() * 2)]; key = `L10F_${den}`; } } while (key === lastCoeffKey);
+        lastCoeffKey = key;
+        if (isDec) renderEquation(`${fmtCoeff(a, 'x', true)}${fmtCoeff(b, 'y')} = ${cleanNum(a * ansX + b * ansY)}`, `x - y = ${ansX - ansY}`);
+        else renderEquation(`x/${den} + y = ${toFraction(ansX / den + ansY)}`, `x + y = ${ansX + ansY}`);
         setupInputMode();
     }
 
     function generateLevelExtreme(ansX, ansY) {
-        let a = 0.5, k = getNonZeroRand(-2, 2), den = 2;
-        renderEquation(`0.5(x ${k >= 0 ? '+' : '-'} ${Math.abs(k)}) + y = ${Number((a * (ansX + k) + ansY).toFixed(2))}`, `x/${den} - y = ${Number((ansX / den - ansY).toFixed(2))}`);
+        let a, k, den, key;
+        do { a = [0.1, 0.2, 0.5][Math.floor(Math.random() * 3)]; k = getNonZeroRand(-2, 2); den = [2, 3, 4][Math.floor(Math.random() * 3)]; key = `L13_${a}_${k}_${den}`; } while (key === lastCoeffKey);
+        lastCoeffKey = key;
+        renderEquation(`${cleanNum(a)}(x ${k >= 0 ? '+' : '-'} ${Math.abs(k)}) + 0.5y = ${toFraction(a * (ansX + k) + 0.5 * ansY)}`, `x/${den} + y = ${toFraction(ansX / den + ansY)}`);
         setupInputMode();
     }
 
@@ -385,45 +435,26 @@
         focusedInputId = 'input-x'; updateInputStyles();
     }
 
-    function updateInputStyles() {
-        document.getElementById('input-x').style.borderColor = focusedInputId === 'input-x' ? '#00ff9d' : '#374151';
-        document.getElementById('input-y').style.borderColor = focusedInputId === 'input-y' ? '#00ff9d' : '#374151';
-    }
-
-    // --- STREAMING_CHUNK:Game Controls and Handlers... ---
-    window.handleKey = (key) => {
-        if (isPaused) return;
-        const input = document.getElementById(focusedInputId);
-        if (key === 'del') input.value = input.value.slice(0, -1);
-        else if (key === 'clear') input.value = '';
-        else { if ((key === '.' || key === '/') && input.value.includes(key)) return; input.value += key; }
-    };
-
-    window.handleSkip = () => { if (isPaused) return; showMessage("보안 노드 재구축 중..."); actualGenerate(); };
-
     function checkAnswer(xi, yi) {
         if (isPaused) return;
-        const parseVal = (v) => { if(typeof v !== 'string') v = v.toString(); if(v.includes('/')) { let p = v.split('/'); return parseFloat(p[0])/parseFloat(p[1]); } return parseFloat(v); };
-        const xv = parseVal(xi), yv = parseVal(yi);
+        const parseVal = (v) => { if(v.includes('/')) { let p = v.split('/'); return parseFloat(p[0])/parseFloat(p[1]); } return parseFloat(v); };
+        const xv = parseVal(xi.toString()), yv = parseVal(yi.toString());
         if (isNaN(xv) || isNaN(yv)) return;
         if (Math.abs(xv - currentAnswers.x) < 0.01 && Math.abs(yv - currentAnswers.y) < 0.01) {
             score += 100 + (timeLeft * 5); level += 1; generateProblem(); updateUI();
-            showMessage("접근 승인!");
-        } else { timeLeft -= 10; showMessage("접근 거부!", true); if (timeLeft <= 0) endGame(); }
+            showMessage("ACCESS GRANTED!");
+        } else { timeLeft -= 10; showMessage("ACCESS DENIED!", true); if (timeLeft <= 0) endGame(); }
     }
 
-    function showMessage(text, isError = false) {
-        const msg = document.getElementById('msg-box');
-        msg.innerText = text; msg.style.color = isError ? '#ff4d4d' : '#00ff9d'; msg.style.opacity = "1";
-        setTimeout(() => msg.style.opacity = "0", 2000);
+    function getRankName(lv) {
+        if (lv >= 19) return "챌린저"; if (lv >= 16) return "마스터"; if (lv >= 13) return "다이아";
+        if (lv >= 10) return "플레티넘"; if (lv >= 7) return "골드"; if (lv >= 4) return "실버"; return "브론즈";
     }
 
     function updateUI() {
         document.getElementById('score-display').innerText = Math.floor(score).toString().padStart(4, '0');
         document.getElementById('level-display').innerText = level;
-        const ranks = ["브론즈", "실버", "골드", "플레티넘", "다이아", "마스터", "챌린저"];
-        let rIdx = Math.min(6, Math.floor((level - 1) / 3));
-        document.getElementById('rank-display').innerText = ranks[rIdx] + " 해커";
+        document.getElementById('rank-display').innerText = getRankName(level) + " 해커";
     }
 
     const startTimer = () => {
@@ -432,55 +463,124 @@
             if (isPaused) return;
             timeLeft -= 0.1;
             const pct = (timeLeft / currentMaxTime) * 100;
-            document.getElementById('timer-bar').style.width = `${pct}%`;
-            document.getElementById('timer-text').innerText = `${Math.ceil(timeLeft)}s`;
+            timerBar.style.width = `${pct}%`;
+            timerText.innerText = `${Math.ceil(timeLeft)}s`;
+            if (timeLeft <= 10) timerBar.style.background = '#ef4444'; else timerBar.style.background = '#00ff9d';
             if (timeLeft <= 0) endGame();
         }, 100);
     };
 
     const endGame = () => {
-        clearInterval(timerInterval);
-        document.getElementById('game-screen').classList.add('hidden');
-        document.getElementById('result-screen').classList.remove('hidden');
+        clearInterval(timerInterval); gameScreen.classList.add('hidden'); resultScreen.classList.remove('hidden');
         document.getElementById('final-score').innerText = Math.floor(score);
         document.getElementById('final-level').innerText = level;
+        const rn = getRankName(level);
+        document.getElementById('final-rank-text').innerText = `당신의 계급은 ${rn} 해커입니다.`;
         const ph = Math.min(100, Math.max(5, (level / 20) * 100));
-        document.getElementById('gauge-bar').style.setProperty('--final-height', `${ph}%`);
-        document.getElementById('gauge-bar').style.height = `${ph}%`;
+        const gb = document.getElementById('gauge-bar');
+        gb.style.height = `${ph}%`;
+        gb.style.setProperty('--final-height', `${ph}%`);
+        gb.classList.add('animate-fill-up');
+        const labels = document.querySelectorAll('.rank-label');
+        const map = {"챌린저": "challenger", "마스터": "master", "다이아": "diamond", "플레티넘": "platinum", "골드": "gold", "실버": "silver", "브론즈": "bronze"};
+        labels.forEach(l => { if(l.innerText.toLowerCase() === map[rn]) l.classList.add('active'); else l.classList.remove('active'); });
     };
 
     function showPopup(html, callback) {
-        isPaused = true; document.getElementById('modal-text').innerHTML = html;
-        document.getElementById('instruction-modal').classList.remove('hidden');
-        document.getElementById('modal-close-btn').onclick = () => {
-            if (!isMusicManualPaused) bgm.play().catch(()=>{});
-            document.getElementById('instruction-modal').classList.add('hidden');
-            isPaused = false; if (callback) callback();
+        isPaused = true; modalText.innerHTML = html; instrModal.classList.remove('hidden');
+        modalCloseBtn.onclick = () => { 
+            if (!isMusicManualPaused) bgm.play().catch(()=>{}); 
+            instrModal.classList.add('hidden'); isPaused = false; if (callback) callback(); 
         };
     }
 
-    // --- STREAMING_CHUNK:Firebase Ranking Logic... ---
-    document.getElementById('save-btn').onclick = async () => {
-        const name = document.getElementById('hacker-name').value.trim();
+    async function fetchRankings() {
+        if (!user) return;
+        const rankRef = collection(db, 'artifacts', appId, 'public', 'data', 'rankings');
+        try {
+            onSnapshot(query(rankRef), (snapshot) => {
+                const data = []; snapshot.forEach(doc => data.push(doc.data()));
+                data.sort((a, b) => b.score - a.score);
+                rankingList.innerHTML = '';
+                if(data.length === 0) { rankingList.innerHTML = '<p class="text-center text-gray-500 italic">랭킹이 비어있습니다.</p>'; return; }
+                data.slice(0, 10).forEach((entry, idx) => {
+                    const row = document.createElement('div');
+                    row.className = `flex justify-between items-center p-2 rounded bg-white/5 border border-white/10`;
+                    row.innerHTML = `<span class="orbitron text-gray-500 w-6">${idx+1}</span><span class="flex-1 ml-2 font-bold truncate">${entry.name}</span><span class="text-green-400 font-bold ml-2">Lv.${entry.level} | ${entry.score}</span>`;
+                    rankingList.appendChild(row);
+                });
+            });
+        } catch (e) { console.error("Ranking fetch failed:", e); }
+    }
+
+    async function saveScore() {
+        const ni = document.getElementById('hacker-name'), name = ni.value.trim();
         if (!name || !user) return;
-        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rankings', user.uid), { name, score: Math.floor(score), level, uid: user.uid, timestamp: Date.now() });
-        document.getElementById('save-ranking-section').innerHTML = '<p class="text-green-400">전송 완료</p>';
-    };
+        try {
+            const rankDoc = doc(db, 'artifacts', appId, 'public', 'data', 'rankings', user.uid);
+            await setDoc(rankDoc, { name: name, score: Math.floor(score), level: level, uid: user.uid, timestamp: Date.now() });
+            document.getElementById('save-ranking-section').innerHTML = '<p class="text-green-400 font-bold italic text-sm">기록이 메인 프레임에 전송되었습니다.</p>';
+        } catch (e) { console.error("저장 실패:", e); }
+    }
 
+    function showMessage(text, isError = false) {
+        const msgBox = document.getElementById('msg-box');
+        msgBox.innerText = text;
+        msgBox.style.color = isError ? '#ff4d4d' : '#00ff9d';
+        msgBox.classList.remove('opacity-0');
+        setTimeout(() => msgBox.classList.add('opacity-0'), 2000);
+    }
+
+    // 1. 규칙 세분화 업데이트
     document.getElementById('start-btn').onclick = () => {
-        const guide = `<div class='space-y-2'>
-            <p>1. 시스템을 해킹하여 연립방정식을 푸십시오.</p>
-            <p>2. 모든 정답은 <strong>정수</strong>입니다.</p>
-            <p>3. 레벨 1~3은 선택, 4부터는 직접 입력입니다.</p>
-            <p>4. 13레벨부터는 매 단계 제한 시간이 줄어듭니다.</p>
-        </div>`;
-        showPopup(guide, () => { generateProblem(); updateUI(); startTimer(); document.getElementById('start-screen').classList.add('hidden'); document.getElementById('game-screen').classList.remove('hidden'); });
+        const guide = `
+            <div class='space-y-4 text-gray-200 text-sm leading-relaxed'>
+                <div class='border-l-2 border-green-400 pl-3'>
+                    <p class='font-bold text-green-400'>[접속 목적]</p>
+                    <p>당신은 세계 최고의 해커가 되기 위해 시스템에 접속하였습니다. 연립방정식 보안 장치를 해독하십시오.</p>
+                </div>
+                <div class='border-l-2 border-green-400 pl-3'>
+                    <p class='font-bold text-green-400'>[해커 등급 시스템]</p>
+                    <p>보안 노드 돌파 수준에 따라 등급이 실시간 갱신됩니다.</p>
+                    <p class='text-[10px] text-gray-400 mt-1 italic'>브론즈 → 실버(Lv.4) → 골드(Lv.7) → 플래티넘(Lv.10) → 다이아(Lv.13) → 마스터(Lv.16) → 챌린저(Lv.19)</p>
+                </div>
+                <div class='border-l-2 border-green-400 pl-3'>
+                    <p class='font-bold text-green-400'>[보안 해독 규칙]</p>
+                    <p>1. 모든 방정식의 정답(x, y)은 <strong>정수</strong> 범위 내에 존재합니다.</p>
+                    <p>2. <strong>Level 1 ~ 3:</strong> 제시된 일차방정식의 해가 되는 올바른 순서쌍 코드를 선택하십시오.</p>
+                    <p>3. <strong>Level 4 이상:</strong> 연립일차방정식이 가동되며, 해를 직접 입력해야 합니다. 레벨이 오를수록 괄호, 소수, 분수 계수가 포함된 복합 보안이 출현합니다.</p>
+                </div>
+                <div class='border-l-2 border-green-400 pl-3'>
+                    <p class='font-bold text-green-400'>[제한 사항]</p>
+                    <p>1. <strong>시간 제한:</strong> Level 12까지는 120초가 주어지나, 13단계부터는 매 단계마다 제한 시간이 5초씩 급격히 줄어듭니다.</p>
+                    <p>2. <strong>보안 감지:</strong> 화면 드래그 금지, 외부 검색 시도 또는 화면 이탈 감지 시 즉시 보안 경고가 발생하며 페널티가 부여될 수 있습니다.</p>
+                </div>
+            </div>`;
+        showPopup(guide, () => { 
+            score = 0; level = 1; 
+            startScreen.classList.add('hidden'); 
+            gameScreen.classList.remove('hidden'); 
+            generateProblem(); 
+            updateUI(); 
+            startTimer(); 
+        });
     };
 
-    document.getElementById('input-x').addEventListener('click', () => { focusedInputId = 'input-x'; updateInputStyles(); });
-    document.getElementById('input-y').addEventListener('click', () => { focusedInputId = 'input-y'; updateInputStyles(); });
-    document.getElementById('submit-btn').onclick = () => { checkAnswer(document.getElementById('input-x').value, document.getElementById('input-y').value); };
+    // 1. 글로벌 랭킹 버튼 고정 (이벤트 리스너를 명시적으로 등록)
+    document.getElementById('view-rank-btn').onclick = (e) => {
+        e.preventDefault();
+        rankModal.classList.remove('hidden');
+        fetchRankings();
+    };
+
+    document.getElementById('rank-modal-close').onclick = () => rankModal.classList.add('hidden');
+    document.getElementById('save-btn').onclick = saveScore;
     document.getElementById('restart-btn').onclick = () => location.reload();
+    document.getElementById('submit-btn').onclick = () => {
+        const ix = document.getElementById('input-x'), iy = document.getElementById('input-y');
+        checkAnswer(ix.value, iy.value);
+    };
+
 </script>
 </body>
 </html>
