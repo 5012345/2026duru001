@@ -503,7 +503,7 @@
                 data.sort((a, b) => b.score - a.score);
                 rankingList.innerHTML = '';
                 if(data.length === 0) { rankingList.innerHTML = '<p class="text-center text-gray-500 italic">랭킹이 비어있습니다.</p>'; return; }
-                data.slice(0, 20).forEach((entry, idx) => {
+                data.slice(0, 30).forEach((entry, idx) => {
                     const row = document.createElement('div');
                     row.className = `flex justify-between items-center p-2 rounded bg-white/5 border border-white/10`;
                     row.innerHTML = `<span class="orbitron text-gray-500 w-6">${idx+1}</span><span class="flex-1 ml-2 font-bold truncate">${entry.name}</span><span class="text-green-400 font-bold ml-2">Lv.${entry.level} | ${entry.score}</span>`;
