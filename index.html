@@ -460,7 +460,7 @@
     const startTimer = () => {
         clearInterval(timerInterval);
         timerInterval = setInterval(() => {
-            if (isPaused) return;
+            
             timeLeft -= 0.1;
             const pct = (timeLeft / currentMaxTime) * 100;
             timerBar.style.width = `${pct}%`;
@@ -487,7 +487,7 @@
     };
 
     function showPopup(html, callback) {
-        isPaused = true; modalText.innerHTML = html; instrModal.classList.remove('hidden');
+        modalText.innerHTML = html; instrModal.classList.remove('hidden');
         modalCloseBtn.onclick = () => { 
             if (!isMusicManualPaused) bgm.play().catch(()=>{}); 
             instrModal.classList.add('hidden'); isPaused = false; if (callback) callback(); 
